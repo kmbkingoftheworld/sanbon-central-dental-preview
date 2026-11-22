@@ -1,0 +1,13 @@
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:Pretendard;src:url('assets/Pretendard-Bold.woff2') format('woff2');font-weight:700 900;font-display:swap}
+:root{font-family:Pretendard,sans-serif;color:#222;background:#efefef;font-synthesis:none;--motion-duration:850ms}
+*{box-sizing:border-box;border:0 solid transparent}body,h1,h2,h3,p{margin:0}body{overflow-x:hidden}button,input,a{font:inherit;color:inherit}a{text-decoration:none}button{padding:0;background:none;cursor:pointer}img{display:block}a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #ed9b3f;outline-offset:6px}a:hover,button:hover{filter:brightness(.96)}
+.page-scale{width:1920px;margin:0 auto;zoom:var(--page-scale,1)}
+.main-design{width:1920px;position:relative;isolation:isolate;overflow:clip}
+.section{position:relative;width:100%}.hero{height:900px;position:relative}.philosophy{height:967px}.doctors{height:1226px}.centers{height:968px}.cases{height:1015px}.reviews{height:905px}.information{height:1419px}
+.page-background{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}.page-background>img{height:7400px;width:1920px;object-fit:fill}
+.skip-link{position:fixed;left:16px;top:-80px;z-index:99;background:white;padding:12px 18px}.skip-link:focus{top:16px}
+.back-top{position:fixed;bottom:24px;right:24px;border:1px solid #ccc;background:#ffffffdb;backdrop-filter:blur(10px);width:44px;height:44px;border-radius:50%;font-size:22px;z-index:10;opacity:0;pointer-events:none;transition:opacity .2s}.back-top.visible{opacity:1;pointer-events:auto}
+dialog{padding:44px;max-width:min(540px,calc(100vw - 36px));border-radius:18px;box-shadow:0 20px 80px #0003;background:#fafaf8;color:#222}dialog::backdrop{background:#0006;backdrop-filter:blur(4px)}dialog h2{font-size:25px;padding-right:20px;margin-bottom:18px}dialog p{white-space:pre-line;line-height:1.8;font-size:16px}dialog a{display:inline-block;margin-top:24px;border-bottom:1px solid #294b78;color:#294b78}.dialog-close{position:absolute;right:18px;top:12px;font-size:30px;width:36px;height:36px}
