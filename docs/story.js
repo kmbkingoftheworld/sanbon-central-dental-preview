@@ -59,7 +59,8 @@
   const doctorSpecialties = doctors.querySelector('[data-node-id="990:3818"]');
   const doctorTimeline = document.createElement('div'), doctorStage = document.createElement('div');
   const doctorBody = document.createElement('div');
-  const doctorLead = .2; // Let the specialty line settle below the menu before the first portrait.
+  const doctorCardStart = index => .2 + index * .82;
+  const doctorRevealLength = .64;
   doctorTimeline.className = 'doctor-timeline'; doctorStage.className = 'doctor-stage';
   doctorBody.className = 'doctor-body';
   if (!staticStory) {
@@ -187,7 +188,7 @@
       const key = ['intro', 'doctors', 'space', 'cases', 'reviews', 'information'].filter(key => metrics[key].top <= renderedY).at(-1) || 'intro';
       anchor = { key, ratio: clamp((renderedY - metrics[key].top) / metrics[key].height) };
       if (!staticStory && renderedY + 80 * metrics.scale >= metrics.doctorTimeline.top && renderedY < metrics.doctorTimeline.top + metrics.doctorTimeline.height - metrics.viewport) {
-        anchor = { key: 'doctorTimeline', ratio: (renderedY + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.viewport };
+        anchor = { key: 'doctorTimeline', ratio: (renderedY + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.doctorScrollUnit };
       }
     }
     const scale = Math.min(1, layoutWidth / 1920), height = innerHeight / scale;
@@ -199,8 +200,10 @@
     const position = element => { const r = element.getBoundingClientRect(); return { top: scrollY + r.top, height: r.height }; };
     metrics = { scale, intro: position(intro), doctors: position(doctors), space: position(centers), cases: position(cases), viewport: innerHeight,
       doctorTimeline: position(staticStory ? doctors : doctorTimeline), philosophy: position(philosophy), questions: position(questions), reviews: position(document.querySelector('#reviews')), information: position(document.querySelector('#information')) };
+    // Keep the desktop timing (2.8 viewports of travel) proportional to the actual sticky range.
+    metrics.doctorScrollUnit = Math.max(1, metrics.doctorTimeline.height - metrics.viewport) / 2.8;
     if (anchor) scrollTo({ top: anchor.key === 'doctorTimeline'
-      ? metrics.doctorTimeline.top - 80 * metrics.scale + anchor.ratio * metrics.viewport
+      ? metrics.doctorTimeline.top - 80 * metrics.scale + anchor.ratio * metrics.doctorScrollUnit
       : metrics[anchor.key].top + anchor.ratio * metrics[anchor.key].height, behavior: 'instant' });
     visualIntro = visualSpace = null;
     render();
@@ -241,11 +244,10 @@
     });
     let doctorsSettling = false;
     if (!staticStory) {
-      const travel = metrics.viewport * .82;
-      const distance = y + 80 * metrics.scale - metrics.doctorTimeline.top;
+      const distance = (y + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.doctorScrollUnit;
       const doctorBlend = 1 - Math.exp(-Math.min(32, elapsed) / 320);
       doctorCards.forEach((card, i) => {
-        const target = clamp((distance - metrics.viewport * doctorLead - i * travel) / (metrics.viewport * .64));
+        const target = clamp((distance - doctorCardStart(i)) / doctorRevealLength);
         // Smooth each card independently, so settling one never starts the next.
         const previous = doctorProgress[i];
         const next = previous === null ? target : previous + (target - previous) * doctorBlend;
@@ -380,7 +382,7 @@
       const token = ++keyboardToken, index = doctorCards.indexOf(card);
       const button = card.querySelector('[data-doctor]');
       keyboardCard = card;
-      const top = metrics.doctorTimeline.top - 80 * metrics.scale + metrics.viewport * (doctorLead + index * .82 + .64);
+      const top = metrics.doctorTimeline.top - 80 * metrics.scale + metrics.doctorScrollUnit * (doctorCardStart(index) + doctorRevealLength);
       scrollTo({ top, behavior: 'smooth' });
       const started = performance.now();
       function finish() {
