@@ -116,12 +116,18 @@
   // same media element, so the source and playback position remain continuous.
   const dock = document.createElement('aside'); dock.className = 'space-dock';
   dock.setAttribute('aria-label', '200평 진료 공간 영상'); dock.hidden = true;
+  const dockLayout = document.createElement('div'); dockLayout.className = 'space-dock-layout';
+  const dockPlan = artwork.querySelector('.plan-image img').cloneNode(false);
+  dockPlan.className = 'space-dock-plan'; dockPlan.alt = '산본중심치과 진료센터 3D 배치도';
+  const dockCopy = document.createElement('div'); dockCopy.className = 'space-dock-copy';
+  dockCopy.innerHTML = '<h2><strong>200평</strong> 규모의 진료 공간</h2><p>분야별 전문 진료센터가 한곳에 모여 있습니다.</p>';
+  dockLayout.append(dockPlan, dockCopy);
   const dockControls = document.createElement('div'); dockControls.className = 'space-dock-controls';
   const dockReturn = document.createElement('button'); dockReturn.type = 'button';
   dockReturn.textContent = '크게 보기'; dockReturn.setAttribute('aria-label', '공간 영상 구간으로 돌아가 크게 보기');
   const dockClose = document.createElement('button'); dockClose.type = 'button';
   dockClose.textContent = '영상 닫기'; dockClose.setAttribute('aria-label', '상단 공간 영상 닫기');
-  dockControls.append(dockReturn, dockClose); dock.append(dockControls); document.body.append(dock);
+  dockControls.append(dockReturn, dockClose); dock.append(dockLayout, dockControls); document.body.append(dock);
   let docked = false, dockDismissed = false, spaceVisited = false;
   function movePlayerNode(parent, node, before = null) {
     if (parent.moveBefore) parent.moveBefore(node, before);
@@ -132,7 +138,7 @@
     const focused = dock.contains(document.activeElement) || playback === document.activeElement;
     docked = next; dock.hidden = !next;
     root.classList.toggle('space-split', next);
-    movePlayerNode(next ? dock : spaceWindow, video, next ? dockControls : veil);
+    movePlayerNode(next ? dockLayout : spaceWindow, video, next ? dockCopy : veil);
     movePlayerNode(next ? dockControls : spaceWindow, playback, next ? dockReturn : null);
     spaceStage.classList.toggle('video-docked', next);
     if (focused) {
@@ -196,7 +202,7 @@
     }
     const scale = Math.min(1, layoutWidth / 1920), height = innerHeight / scale;
     const headerHeight = header.getBoundingClientRect().bottom;
-    const splitLine = (innerHeight + headerHeight) / 2;
+    const splitLine = headerHeight + (innerHeight - headerHeight) * .4;
     css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)),
       'space-header-height': headerHeight + 'px', 'space-split-line': splitLine + 'px' });
     root.classList.toggle('story-short', height < 870);
@@ -282,7 +288,7 @@
     const spaceBottom = metrics.space.top + metrics.space.height - y;
     const visible = y + metrics.viewport > metrics.space.top && spaceBottom > metrics.headerHeight + 1;
     if (visible && y >= metrics.space.top - metrics.headerHeight) spaceVisited = true;
-    // Pin at the moment the following section reaches the lower half.
+    // Pin when the next section reaches the bottom edge of the video pane.
     const afterSpace = spaceBottom <= metrics.splitLine + 1;
     if (!afterSpace && scrollingBack) dockDismissed = false;
     setDocked(spaceVisited && videoAvailable && afterSpace && !dockDismissed);
