@@ -199,8 +199,9 @@
     if (element.getAttribute('aria-hidden') !== String(hide)) element.setAttribute('aria-hidden', String(hide));
   }
   function measure(preservePosition = false) {
-    const layoutWidth=root.getBoundingClientRect().width;
-    if (!layoutWidth || innerHeight < 1) return;
+    // A closing dialog can briefly reserve a scrollbar gutter while the canvas keeps its zoom.
+    const scale = stage.getBoundingClientRect().width / 1920;
+    if (!scale || innerHeight < 1) return;
     let anchor;
     if (preservePosition && metrics) {
       const readingY = renderedY + (docked ? metrics.splitLine : 0);
@@ -210,7 +211,7 @@
         anchor = { key: 'doctorTimeline', ratio: (renderedY + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.doctorScrollUnit };
       }
     }
-    const scale = Math.min(1, layoutWidth / 1920), height = innerHeight / scale;
+    const height = innerHeight / scale;
     const headerHeight = header.getBoundingClientRect().bottom;
     css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)),
       'space-header-height': headerHeight + 'px', 'space-pane-third': (innerHeight - headerHeight) / 3 + 'px' });
