@@ -202,9 +202,11 @@
     }
     const scale = Math.min(1, layoutWidth / 1920), height = innerHeight / scale;
     const headerHeight = header.getBoundingClientRect().bottom;
-    const splitLine = headerHeight + (innerHeight - headerHeight) / 3;
     css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)),
-      'space-header-height': headerHeight + 'px', 'space-split-line': splitLine + 'px' });
+      'space-header-height': headerHeight + 'px', 'space-pane-third': (innerHeight - headerHeight) / 3 + 'px' });
+    // The pane has an explicit CSS height even while hidden. Its edge also drives anchors and docking.
+    const splitLine = headerHeight + parseFloat(getComputedStyle(dock).height);
+    css(root, { 'space-split-line': splitLine + 'px' });
     root.classList.toggle('story-short', height < 870);
     root.classList.toggle('story-compact', height < 720);
     if (!staticStory) css(doctorStage, { 'doctor-fit': Math.min(1, doctorBody.clientHeight / Math.max(1, doctorGroup.offsetHeight)) });
