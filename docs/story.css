@@ -120,6 +120,11 @@
  .space-dock-copy h2{font-size:clamp(15px,2.2vw,22px)}
  .space-dock-copy p{margin-top:3px;font-size:13px;line-height:1.35}
 }
+@media (max-height:360px) and (orientation:landscape){
+ .space-dock-controls{padding-block:0}
+ .space-dock-copy h2{line-height:1.15}
+ .space-dock-copy p{margin-top:1px;font-size:12px;line-height:1.2}
+}
 .space-stage.video-docked .space-marker{opacity:0}
 .space-stage.tour-video .space-play{bottom:calc(24px + var(--space-inset,0px))}
 .space-stage.tour-video .space-marker{bottom:calc(32px + var(--space-inset,0px))}

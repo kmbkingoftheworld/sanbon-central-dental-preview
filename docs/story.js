@@ -202,7 +202,7 @@
     }
     const scale = Math.min(1, layoutWidth / 1920), height = innerHeight / scale;
     const headerHeight = header.getBoundingClientRect().bottom;
-    const splitLine = headerHeight + (innerHeight - headerHeight) * .4;
+    const splitLine = headerHeight + (innerHeight - headerHeight) / 3;
     css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)),
       'space-header-height': headerHeight + 'px', 'space-split-line': splitLine + 'px' });
     root.classList.toggle('story-short', height < 870);
