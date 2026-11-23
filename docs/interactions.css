@@ -37,9 +37,9 @@ html.detail-open{overflow:hidden;scrollbar-gutter:stable}
 [data-node-id="986:262"]{position:relative;left:auto;bottom:auto}
 /* Map labels are artwork: let clicks reach the existing map link below. */
 [data-node-id="986:335"]{pointer-events:none}
-.hero-line{display:block}.motion-active .hero-line{animation:heroIn var(--motion-duration) ease both}.motion-active .hero-line+span{animation-delay:.45s}
+.hero-line{display:block}.motion-active .hero-line{animation:heroIn var(--motion-duration) ease both}.motion-active .hero-line+span{animation-delay:.2s}
 @keyframes heroIn{from{opacity:0}to{opacity:1}}
-.motion-active .reveal{opacity:0;transform:translateY(48px);transition:opacity var(--motion-duration) ease,transform var(--motion-duration) cubic-bezier(.2,.65,.2,1)}
+.motion-active .reveal{opacity:0;transform:translateY(28px);transition:opacity var(--motion-duration) ease-out,transform var(--motion-duration) cubic-bezier(.22,.7,.26,1)}
 .motion-active .reveal.is-visible{opacity:1;transform:translateY(0)}
 .motion-active [data-node-id="986:455"]{transition-delay:.12s}.motion-active [data-node-id="986:471"]{transition-delay:.24s}
 .motion-active .plan-image{transform:translateY(var(--plan-shift,0px));will-change:transform}

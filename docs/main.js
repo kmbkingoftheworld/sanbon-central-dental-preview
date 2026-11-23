@@ -5,16 +5,19 @@ let lastScale;
 function fit(){const next=Math.min(1,document.documentElement.getBoundingClientRect().width/1920);const nextY=lastScale?scrollY*next/lastScale:scrollY;document.documentElement.style.setProperty('--page-scale',next);if(lastScale&&lastScale!==next&&!document.documentElement.classList.contains('story-active'))scrollTo(0,nextY);lastScale=next;}
 fit();addEventListener('resize',fit);
 if (motion) document.documentElement.classList.add('explicit-motion');
-document.documentElement.style.setProperty('--motion-duration',Math.max(400,Math.min(1600,Number(params.get('duration'))||850))+'ms');
-let observer;
-Promise.all([document.fonts.ready,...[...document.images].filter(i=>i.getAttribute('fetchpriority')==='high').map(i=>i.decode().catch(()=>{}))]).then(()=>{
- if(!motion)return;
- document.documentElement.classList.add('motion-active');
- observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){
+function setMotionDuration(value){
+ const duration=Number(value);
+ if(duration)document.documentElement.style.setProperty('--motion-duration',Math.max(400,Math.min(1600,duration))+'ms');
+ else document.documentElement.style.removeProperty('--motion-duration');
+}
+setMotionDuration(params.get('duration'));
+if(motion)document.addEventListener('DOMContentLoaded',()=>{
+ const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){
   entry.target.classList.add('is-visible');observer.unobserve(entry.target);
- }},{threshold:.12});
- document.querySelectorAll('.reveal').forEach(e=>{if(!e.classList.contains('doctor-scroll-card'))observer.observe(e);});
-});
+ }},{threshold:.06});
+ document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+ document.documentElement.classList.add('motion-active');
+},{once:true});
 for(const range of document.querySelectorAll('.comparison-range')){
  const box=range.closest('.comparison');
  range.addEventListener('input',()=>{box.style.setProperty('--split',range.value+'%');box.classList.add('is-adjusting');range.setAttribute('aria-valuetext',`치료 전 ${range.value}%, 치료 후 ${100-range.value}%`);});
@@ -32,7 +35,7 @@ function reportLayoutPosition(){
  if(id===lastLayoutSection)return;
  lastLayoutSection=id;parent.postMessage({type:'preview-active-section',id},'*');
 }
-function updateScroll(){scheduled=false;reportLayoutPosition();const showTop=scrollY>400;topButton.inert=!showTop;topButton.classList.toggle('visible',showTop);if(motion&&!document.documentElement.classList.contains('story-active')){const plan=document.querySelector('.plan-image');const r=plan.getBoundingClientRect();const progress=Math.max(-1,Math.min(1,(r.top+r.height/2-innerHeight/2)/innerHeight));plan.style.setProperty('--plan-shift',`${progress*22}px`);}}
+function updateScroll(){scheduled=false;reportLayoutPosition();const showTop=scrollY>400;if(topButton.inert===showTop)topButton.inert=!showTop;topButton.classList.toggle('visible',showTop);if(motion&&!document.documentElement.classList.contains('story-active')){const plan=document.querySelector('.plan-image');const r=plan.getBoundingClientRect();const progress=Math.max(-1,Math.min(1,(r.top+r.height/2-innerHeight/2)/innerHeight));plan.style.setProperty('--plan-shift',`${progress*22}px`);}}
 function scheduleScrollUpdate(){if(!scheduled){scheduled=true;requestAnimationFrame(updateScroll);}}
 addEventListener('scroll',scheduleScrollUpdate,{passive:true});
 addEventListener('resize',scheduleScrollUpdate);updateScroll();
@@ -154,7 +157,7 @@ document.querySelectorAll('[data-dialog]').forEach(b=>b.onclick=()=>{
 addEventListener('message',event=>{if(event.source!==parent||!event.data||event.data.type!=='preview-section')return;navigateSection(event.data.id,{review:true});});
 addEventListener('message',event=>{
  if(event.source!==parent||event.data?.type!=='preview-speed')return;
- document.documentElement.style.setProperty('--motion-duration',Math.max(400,Math.min(1600,Number(event.data.duration)||850))+'ms');
+ setMotionDuration(event.data.duration);
  if(!motion)return;
  const visible=[...document.querySelectorAll('#doctors .reveal.is-visible')].filter(el=>{const r=el.getBoundingClientRect();return r.top<innerHeight&&r.bottom>0;});
  visible.forEach(el=>el.classList.remove('is-visible'));

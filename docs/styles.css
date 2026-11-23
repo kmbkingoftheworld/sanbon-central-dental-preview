@@ -2,7 +2,7 @@
 @font-face{font-family:Pretendard;src:url('assets/Pretendard-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
 @font-face{font-family:Pretendard;src:url('assets/Pretendard-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
 @font-face{font-family:Pretendard;src:url('assets/Pretendard-Bold.woff2') format('woff2');font-weight:700 900;font-display:swap}
-:root{font-family:Pretendard,sans-serif;color:#222;background:#efefef;font-synthesis:none;--motion-duration:850ms}
+:root{font-family:Pretendard,sans-serif;color:#222;background:#efefef;font-synthesis:none;--motion-duration:460ms}
 *{box-sizing:border-box;border:0 solid transparent}body,h1,h2,h3,p{margin:0}body{overflow-x:hidden}button,input,a{font:inherit;color:inherit}a{text-decoration:none}button{padding:0;background:none;cursor:pointer}img{display:block}a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #ed9b3f;outline-offset:6px}a:hover,button:hover{filter:brightness(.96)}
 .page-scale{width:1920px;margin:0 auto;zoom:var(--page-scale,1)}
 .main-design{width:1920px;position:relative;isolation:isolate;overflow:clip}

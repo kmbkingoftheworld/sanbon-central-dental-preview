@@ -103,11 +103,12 @@
   artwork.append(...centers.childNodes); centers.append(spaceStage);
   spaceStage.append(spaceWindow); spaceWindow.append(artwork);
   const video = document.createElement('video'); video.className = 'space-video';
+  const videoFrame = document.createElement('div'); videoFrame.className = 'space-video-frame';
   video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'metadata';
   video.setAttribute('aria-label', config.spaceVideoLabel || '산본중심치과 대기 공간과 진료실 실제 촬영 영상');
   if (config.spacePoster) video.poster = config.spacePoster;
   const veil = document.createElement('div'); veil.className = 'space-veil';
-  spaceWindow.append(video, veil, copy);
+  videoFrame.append(video); spaceWindow.append(videoFrame, veil, copy);
   const marker = document.createElement('span'); marker.className = 'space-marker'; marker.textContent = '산본중심치과의 공간';
   const playback = document.createElement('button'); playback.type = 'button'; playback.className = 'space-play'; playback.textContent = '영상 재생';
   spaceWindow.append(marker, playback);
@@ -138,7 +139,7 @@
     const focused = dock.contains(document.activeElement) || playback === document.activeElement;
     docked = next; dock.hidden = !next;
     root.classList.toggle('space-split', next);
-    movePlayerNode(next ? dockLayout : spaceWindow, video, next ? dockCopy : veil);
+    movePlayerNode(next ? dockLayout : videoFrame, video, next ? dockCopy : null);
     movePlayerNode(next ? dockControls : spaceWindow, playback, next ? dockReturn : null);
     spaceStage.classList.toggle('video-docked', next);
     if (focused) {
@@ -158,12 +159,19 @@
     dockDismissed = true; setDocked(false); video.pause(); requestRender();
   });
 
-  let videoAvailable = false, manualPause = staticStory, manualStart = false, scheduled = false, metrics;
+  let videoAvailable = false, videoAspect = 0, manualPause = staticStory, manualStart = false, metrics;
   let defaultVideoPending = Boolean(config.spaceVideo), candidatePending = false;
   let previewVisible = true, playPending = false, autoplayBlocked = false, cancelCandidate, activeSection;
-  let visualIntro = null, visualSpace = null, lastFrame = performance.now(), renderedY = scrollY;
+  let visualIntro = null, visualSpace = null, lastFrame = null, pendingFrame = 0, renderedY = scrollY;
+  const detailDialog = document.getElementById('detail-dialog');
+  const responseMs = 64;
   const clamp = value => Math.max(0, Math.min(1, value));
   const smooth = (value, start, end) => { const t = clamp((value - start) / (end - start)); return t * t * (3 - 2 * t); };
+  function follow(current, target, blend) {
+    if (current === null || blend === 1) return target;
+    const next = current + (target - current) * blend;
+    return Math.abs(target - next) < .00005 ? target : next;
+  }
   function notifyVideo(status, url, retained = false) {
     if (parent !== window) parent.postMessage({ type: 'preview-space-status', status, url, retained }, '*');
   }
@@ -178,11 +186,13 @@
   // Only write values that changed; settled scenes should not invalidate styles on every scroll.
   const styleCache = new WeakMap();
   const css = (element, values) => {
-    const previous = styleCache.get(element) || {};
+    let previous = styleCache.get(element);
+    if (!previous) { previous = {}; styleCache.set(element, previous); }
     Object.entries(values).forEach(([key, value]) => {
-      if (previous[key] !== value) element.style.setProperty('--' + key, value);
+      if (previous[key] === value) return;
+      element.style.setProperty('--' + key, value);
+      previous[key] = value;
     });
-    styleCache.set(element, { ...previous, ...values });
   };
   function hidden(element, hide) {
     if (element.inert !== hide) element.inert = hide;
@@ -211,37 +221,21 @@
     root.classList.toggle('story-compact', height < 720);
     if (!staticStory) css(doctorStage, { 'doctor-fit': Math.min(1, doctorBody.clientHeight / Math.max(1, doctorGroup.offsetHeight)) });
     const position = element => { const r = element.getBoundingClientRect(); return { top: scrollY + r.top, height: r.height }; };
+    const stageRect = spaceStage.getBoundingClientRect(), frameRect = videoFrame.getBoundingClientRect();
     metrics = { scale, headerHeight, splitLine, intro: position(intro), doctors: position(doctors), space: position(centers), cases: position(cases), viewport: innerHeight,
+      stageHeight: stageRect.height, videoFrame: { width: frameRect.width / scale, height: frameRect.height / scale, top: (frameRect.top - stageRect.top) / scale },
       doctorTimeline: position(staticStory ? doctors : doctorTimeline), philosophy: position(philosophy), questions: position(questions), reviews: position(document.querySelector('#reviews')), information: position(document.querySelector('#information')) };
     // Keep the desktop timing (2.8 viewports of travel) proportional to the actual sticky range.
     metrics.doctorScrollUnit = Math.max(1, metrics.doctorTimeline.height - metrics.viewport) / 2.8;
     if (anchor) scrollTo({ top: anchor.key === 'doctorTimeline'
       ? metrics.doctorTimeline.top - 80 * metrics.scale + anchor.ratio * metrics.doctorScrollUnit
       : metrics[anchor.key].top + anchor.ratio * metrics[anchor.key].height - (docked ? splitLine : 0), behavior: 'instant' });
-    visualIntro = visualSpace = null;
-    render();
+    cancelAnimationFrame(pendingFrame); pendingFrame = 0;
+    render(performance.now(), true);
   }
-  function render() {
-    scheduled = false;
-    if (!metrics) return;
-    const y = scrollY, progress = metric => clamp((y - metric.top) / Math.max(1, metric.height - metrics.viewport));
-    const scrollingBack = y < renderedY;
-    renderedY = y;
-    // Warm the video one viewport before the space scene, without competing with the opening page.
-    // A user-selected candidate takes priority even if scrolling reaches this threshold mid-decode.
-    if (defaultVideoPending && !candidatePending && previewVisible) {
-      const spaceRect = centers.getBoundingClientRect();
-      if (spaceRect.top <= innerHeight * 2 && spaceRect.bottom > 0) {
-        defaultVideoPending = false; setVideo(config.spaceVideo);
-      }
-    }
-    const targetIntro = progress(metrics.intro), targetSpace = progress(metrics.space);
-    const now = performance.now(), elapsed = Math.min(64, now - lastFrame), blend = 1 - Math.exp(-elapsed / 125);
-    lastFrame = now;
-    const follow = (current, target) => current === null || staticStory || Math.abs(target - current) > .55 ? target : current + (target - current) * blend;
-    visualIntro = follow(visualIntro, targetIntro); visualSpace = follow(visualSpace, targetSpace);
+  function renderIntro(p) {
     // Finish the outgoing copy before revealing the next passage at the same position.
-    const p = visualIntro, heroOut = smooth(p, .12, .225), philoIn = smooth(p, .25, .35), philoOut = smooth(p, .49, .60), questionIn = smooth(p, .625, .71);
+    const heroOut = smooth(p, .12, .225), philoIn = smooth(p, .25, .35), philoOut = smooth(p, .49, .60), questionIn = smooth(p, .625, .71);
     css(stage, {
       'hero-alpha': 1 - heroOut, 'hero-y': -56 * heroOut + 'px', 'hero-scale': 1 + .018 * heroOut,
       'photo-alpha': 1 - smooth(p, .16, .31), 'photo-scale': 1.045 - .045 * smooth(p, 0, .34),
@@ -256,38 +250,65 @@
       css(card, { 'card-alpha': alpha, 'card-y': 62 * (1 - alpha) + 'px' });
       hidden(card, !staticStory && alpha < .05);
     });
-    let doctorsSettling = false;
-    if (!staticStory) {
-      const distance = (y + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.doctorScrollUnit;
-      const doctorBlend = 1 - Math.exp(-Math.min(32, elapsed) / 320);
-      doctorCards.forEach((card, i) => {
-        const target = clamp((distance - doctorCardStart(i)) / doctorRevealLength);
-        // Smooth each card independently, so settling one never starts the next.
-        const previous = doctorProgress[i];
-        const next = previous === null ? target : previous + (target - previous) * doctorBlend;
-        const current = Math.abs(target - next) < .001 ? target : next;
-        doctorProgress[i] = current;
-        doctorsSettling ||= Math.abs(target - current) >= .001;
-        const alpha = smooth(current, 0, 1);
-        css(card, { 'doctor-alpha': alpha, 'doctor-y': -48 * (1 - alpha) + 'px' });
-        hidden(card, alpha < .05);
-      });
+  }
+  function renderDoctors(y, blend) {
+    const distance = (y + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.doctorScrollUnit;
+    let settling = false;
+    doctorCards.forEach((card, i) => {
+      const target = clamp((distance - doctorCardStart(i)) / doctorRevealLength);
+      const current = follow(doctorProgress[i], target, blend);
+      if (current !== target) settling = true;
+      if (current === doctorProgress[i]) return;
+      doctorProgress[i] = current;
+      const alpha = smooth(current, 0, 1);
+      css(card, { 'doctor-alpha': alpha, 'doctor-y': -36 * (1 - alpha) + 'px' });
+      hidden(card, alpha < .05);
+    });
+    return settling;
+  }
+  // Fit the entire picture inside the moving edges using a transform on a fixed video box.
+  function fitTourVideo(inset, stageTop) {
+    if (!spaceStage.classList.contains('tour-video') || !videoAspect) return;
+    const frame = metrics.videoFrame;
+    const headerOverlap = staticStory ? 0 : (metrics.headerHeight - stageTop) / metrics.scale;
+    const topTrim = Math.min(frame.height, Math.max(0, Math.max(headerOverlap, inset) - frame.top));
+    const baseWidth = Math.min(frame.width, frame.height * videoAspect);
+    const fitWidth = Math.max(0, Math.min(frame.width - 2 * inset, (frame.height - topTrim - inset) * videoAspect));
+    css(video, { 'tour-scale': baseWidth ? fitWidth / baseWidth : 0, 'tour-y': (topTrim - inset) / 2 + 'px' });
+  }
+  function render(time, sync = false) {
+    if (!metrics) return;
+    const y = scrollY, viewport = metrics.viewport;
+    const progress = metric => clamp((y - metric.top) / Math.max(1, metric.height - viewport));
+    const onScreen = metric => y + viewport > metric.top && y < metric.top + metric.height;
+    const scrollingBack = y < renderedY;
+    renderedY = y;
+    const spaceTop = metrics.space.top - y, spaceBottom = spaceTop + metrics.space.height;
+    if (defaultVideoPending && !candidatePending && previewVisible && spaceTop <= viewport * 2 && spaceBottom > 0) {
+      defaultVideoPending = false; setVideo(config.spaceVideo);
     }
-    const q = visualSpace, opening = staticStory ? 1 : smooth(q, 0, .18), textAlpha = smooth(q, .51, .65);
+    // Use the browser's frame clock, including on high-refresh displays. Offscreen scenes settle immediately.
+    const elapsed = Math.max(0, time - (lastFrame ?? time));
+    const blend = sync || staticStory ? 1 : -Math.expm1(-elapsed / responseMs);
+    const targetIntro = progress(metrics.intro), targetSpace = progress(metrics.space);
+    const p = follow(visualIntro, targetIntro, onScreen(metrics.intro) ? blend : 1);
+    if (p !== visualIntro) { renderIntro(p); visualIntro = p; }
+    const doctorsSettling = !staticStory && renderDoctors(y, onScreen(metrics.doctorTimeline) ? blend : 1);
+    const q = visualSpace = follow(visualSpace, targetSpace, onScreen(metrics.space) ? blend : 1);
+    const opening = staticStory ? 1 : smooth(q, 0, .18), inset = 100 * (1 - opening), textAlpha = smooth(q, .51, .65);
     const videoAlpha = videoAvailable ? (staticStory || config.spaceVideoFromStart ? 1 : smooth(q, .25, .39)) : 0;
-    // A non-sticky scene scrolls as one surface; following the header would shrink its video.
-    const safeVideoTop = staticStory ? 80 : Math.max(80, (header.getBoundingClientRect().bottom - spaceStage.getBoundingClientRect().top) / metrics.scale);
+    const stageTop = Math.min(Math.max(0, spaceTop), spaceBottom - metrics.stageHeight);
+    fitTourVideo(inset, stageTop);
     css(spaceStage, {
-      'space-safe-top': safeVideoTop + 'px',
-      'space-inset': 100 * (1 - opening) + 'px', 'space-radius': 44 * (1 - opening) + 'px',
+      'space-inset': inset + 'px', 'space-radius': 44 * (1 - opening) + 'px',
       'space-text-alpha': textAlpha, 'space-text-y': 65 * (1 - textAlpha) + 'px', 'space-scale': 1.035 + .04 * smooth(q, .08, .8),
       'space-video-alpha': videoAlpha, 'space-plan-alpha': 1 - videoAlpha
     });
     hidden(copy, !staticStory && textAlpha < .05);
-    artwork.inert = videoAlpha > .05 || textAlpha > .05 || staticStory;
+    const artInert = videoAlpha > .05 || textAlpha > .05 || staticStory;
+    if (artwork.inert !== artInert) artwork.inert = artInert;
     const artworkHidden = String(videoAlpha > .95);
     if (artwork.getAttribute('aria-hidden') !== artworkHidden) artwork.setAttribute('aria-hidden', artworkHidden);
-    const spaceBottom = metrics.space.top + metrics.space.height - y;
     const visible = y + metrics.viewport > metrics.space.top && spaceBottom > metrics.headerHeight + 1;
     if (visible && y >= metrics.space.top - metrics.headerHeight) spaceVisited = true;
     // Pin when the next section reaches the bottom edge of the video pane.
@@ -305,7 +326,7 @@
     if (!visible && !docked) manualStart = false;
     const playbackReady = docked || staticStory || q >= .24 || manualStart;
     const playerVisible = docked || (visible && (!afterSpace || !dockDismissed));
-    if (videoAvailable && videoAlpha > .05 && playerVisible && playbackReady && !manualPause && previewVisible && !document.querySelector('#detail-dialog[open]') && document.visibilityState === 'visible') {
+    if (videoAvailable && videoAlpha > .05 && playerVisible && playbackReady && !manualPause && previewVisible && !detailDialog?.open && document.visibilityState === 'visible') {
       if (video.paused) playVideo();
     } else if (!video.paused) video.pause();
     const readingTop = docked ? metrics.splitLine : 0;
@@ -318,9 +339,15 @@
       activeSection = currentSection;
       if (parent !== window) parent.postMessage({ type: 'preview-active-section', id: currentSection }, '*');
     }
-    if (doctorsSettling || Math.abs(targetIntro - p) > .0002 || Math.abs(targetSpace - q) > .0002) requestRender();
+    if (doctorsSettling || p !== targetIntro || q !== targetSpace) {
+      lastFrame = time; requestRender();
+    } else lastFrame = null;
   }
-  function requestRender() { if (!scheduled) { scheduled = true; requestAnimationFrame(render); } }
+  function requestRender() {
+    if (pendingFrame) return;
+    lastFrame ??= performance.now();
+    pendingFrame = requestAnimationFrame(time => { pendingFrame = 0; render(time); });
+  }
   function setVideo(url) {
     if (typeof url !== 'string' || !/^(assets\/|blob:|https:\/\/)/.test(url)) return;
     cancelCandidate?.();
@@ -335,6 +362,7 @@
       finished = true;
       if (success) {
         defaultVideoPending = false;
+        videoAspect = candidate.videoWidth / candidate.videoHeight;
         video.src = url; videoAvailable = true; manualPause = staticStory; manualStart = false; autoplayBlocked = false;
         spaceStage.classList.add('has-video'); requestRender();
       } else notifyVideo('error', url, videoAvailable);
@@ -347,7 +375,7 @@
     notifyVideo('loading', url, videoAvailable); candidate.src = url;
   }
   video.addEventListener('error', () => {
-    videoAvailable = false; spaceStage.classList.remove('has-video'); render();
+    videoAvailable = false; spaceStage.classList.remove('has-video'); requestRender();
     notifyVideo('error', video.getAttribute('src'));
   });
   video.addEventListener('loadeddata', () => {
