@@ -115,12 +115,12 @@
   // A body-level player stays outside the zoomed/clipped story canvas. Move the
   // same media element, so the source and playback position remain continuous.
   const dock = document.createElement('aside'); dock.className = 'space-dock';
-  dock.setAttribute('aria-label', '공간 영상 미니플레이어'); dock.hidden = true;
+  dock.setAttribute('aria-label', '200평 진료 공간 영상'); dock.hidden = true;
   const dockControls = document.createElement('div'); dockControls.className = 'space-dock-controls';
   const dockReturn = document.createElement('button'); dockReturn.type = 'button';
   dockReturn.textContent = '크게 보기'; dockReturn.setAttribute('aria-label', '공간 영상 구간으로 돌아가 크게 보기');
   const dockClose = document.createElement('button'); dockClose.type = 'button';
-  dockClose.textContent = '닫기 ×'; dockClose.setAttribute('aria-label', '공간 영상 미니플레이어 닫기');
+  dockClose.textContent = '영상 닫기'; dockClose.setAttribute('aria-label', '상단 공간 영상 닫기');
   dockControls.append(dockReturn, dockClose); dock.append(dockControls); document.body.append(dock);
   let docked = false, dockDismissed = false, spaceVisited = false;
   function movePlayerNode(parent, node, before = null) {
@@ -131,13 +131,15 @@
     if (docked === next) return;
     const focused = dock.contains(document.activeElement) || playback === document.activeElement;
     docked = next; dock.hidden = !next;
+    root.classList.toggle('space-split', next);
     movePlayerNode(next ? dock : spaceWindow, video, next ? dockControls : veil);
     movePlayerNode(next ? dockControls : spaceWindow, playback, next ? dockReturn : null);
     spaceStage.classList.toggle('video-docked', next);
-    if (!next && focused) {
-      // Scroll alone must not jump back to an off-screen player on keyboard focus.
-      const target = centers.getBoundingClientRect().bottom > innerHeight * .5 ? playback : cases;
-      if (target === cases) target.tabIndex = -1;
+    if (focused) {
+      const backInScene = centers.getBoundingClientRect().bottom > metrics.splitLine + 1;
+      const target = next || backInScene ? playback :
+        document.elementFromPoint(root.clientWidth / 2, metrics.splitLine + 1)?.closest('main > section') || cases;
+      if (target !== playback) target.tabIndex = -1;
       target.focus({ preventScroll: true });
     }
   }
@@ -185,26 +187,29 @@
     if (!layoutWidth || innerHeight < 1) return;
     let anchor;
     if (preservePosition && metrics) {
-      const key = ['intro', 'doctors', 'space', 'cases', 'reviews', 'information'].filter(key => metrics[key].top <= renderedY).at(-1) || 'intro';
-      anchor = { key, ratio: clamp((renderedY - metrics[key].top) / metrics[key].height) };
+      const readingY = renderedY + (docked ? metrics.splitLine : 0);
+      const key = ['intro', 'doctors', 'space', 'cases', 'reviews', 'information'].filter(key => metrics[key].top <= readingY).at(-1) || 'intro';
+      anchor = { key, ratio: clamp((readingY - metrics[key].top) / metrics[key].height) };
       if (!staticStory && renderedY + 80 * metrics.scale >= metrics.doctorTimeline.top && renderedY < metrics.doctorTimeline.top + metrics.doctorTimeline.height - metrics.viewport) {
         anchor = { key: 'doctorTimeline', ratio: (renderedY + 80 * metrics.scale - metrics.doctorTimeline.top) / metrics.doctorScrollUnit };
       }
     }
     const scale = Math.min(1, layoutWidth / 1920), height = innerHeight / scale;
-    css(dock, { 'dock-top': (header.getBoundingClientRect().bottom + 14) + 'px' });
-    css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)) });
+    const headerHeight = header.getBoundingClientRect().bottom;
+    const splitLine = (innerHeight + headerHeight) / 2;
+    css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)),
+      'space-header-height': headerHeight + 'px', 'space-split-line': splitLine + 'px' });
     root.classList.toggle('story-short', height < 870);
     root.classList.toggle('story-compact', height < 720);
     if (!staticStory) css(doctorStage, { 'doctor-fit': Math.min(1, doctorBody.clientHeight / Math.max(1, doctorGroup.offsetHeight)) });
     const position = element => { const r = element.getBoundingClientRect(); return { top: scrollY + r.top, height: r.height }; };
-    metrics = { scale, intro: position(intro), doctors: position(doctors), space: position(centers), cases: position(cases), viewport: innerHeight,
+    metrics = { scale, headerHeight, splitLine, intro: position(intro), doctors: position(doctors), space: position(centers), cases: position(cases), viewport: innerHeight,
       doctorTimeline: position(staticStory ? doctors : doctorTimeline), philosophy: position(philosophy), questions: position(questions), reviews: position(document.querySelector('#reviews')), information: position(document.querySelector('#information')) };
     // Keep the desktop timing (2.8 viewports of travel) proportional to the actual sticky range.
     metrics.doctorScrollUnit = Math.max(1, metrics.doctorTimeline.height - metrics.viewport) / 2.8;
     if (anchor) scrollTo({ top: anchor.key === 'doctorTimeline'
       ? metrics.doctorTimeline.top - 80 * metrics.scale + anchor.ratio * metrics.doctorScrollUnit
-      : metrics[anchor.key].top + anchor.ratio * metrics[anchor.key].height, behavior: 'instant' });
+      : metrics[anchor.key].top + anchor.ratio * metrics[anchor.key].height - (docked ? splitLine : 0), behavior: 'instant' });
     visualIntro = visualSpace = null;
     render();
   }
@@ -212,6 +217,7 @@
     scheduled = false;
     if (!metrics) return;
     const y = scrollY, progress = metric => clamp((y - metric.top) / Math.max(1, metric.height - metrics.viewport));
+    const scrollingBack = y < renderedY;
     renderedY = y;
     // Warm the video one viewport before the space scene, without competing with the opening page.
     // A user-selected candidate takes priority even if scrolling reaches this threshold mid-decode.
@@ -273,28 +279,29 @@
     artwork.inert = videoAlpha > .05 || textAlpha > .05 || staticStory;
     const artworkHidden = String(videoAlpha > .95);
     if (artwork.getAttribute('aria-hidden') !== artworkHidden) artwork.setAttribute('aria-hidden', artworkHidden);
-    const headerHeight = 80 * metrics.scale;
     const spaceBottom = metrics.space.top + metrics.space.height - y;
-    const visible = y + metrics.viewport > metrics.space.top && spaceBottom > headerHeight + 1;
-    if (visible && y >= metrics.space.top - headerHeight && videoAlpha > .5) spaceVisited = true;
-    const afterSpace = spaceBottom <= metrics.viewport * .5;
-    if (!afterSpace) dockDismissed = false;
-    setDocked(spaceVisited && videoAvailable && afterSpace && !dockDismissed && innerWidth >= 800);
+    const visible = y + metrics.viewport > metrics.space.top && spaceBottom > metrics.headerHeight + 1;
+    if (visible && y >= metrics.space.top - metrics.headerHeight) spaceVisited = true;
+    // Pin at the moment the following section reaches the lower half.
+    const afterSpace = spaceBottom <= metrics.splitLine + 1;
+    if (!afterSpace && scrollingBack) dockDismissed = false;
+    setDocked(spaceVisited && videoAvailable && afterSpace && !dockDismissed);
     hidden(playback, !docked && videoAlpha < .5);
     const markerText = videoAlpha > .5 ? (config.spaceVideoMarker || '02 / 실제 진료 공간') : '01 / 공간의 구성';
     if (marker.textContent !== markerText) marker.textContent = markerText;
     const spaceOnScreen = y >= metrics.space.top && y < metrics.space.top + metrics.space.height - 90;
     const lightIntro = staticStory ? y >= metrics.philosophy.top - 80 : p > .265;
-    header.classList.toggle('is-light', lightIntro && !(spaceOnScreen && (videoAlpha > .5 || textAlpha > .5)));
+    header.classList.toggle('is-light', !docked && lightIntro && !(spaceOnScreen && (videoAlpha > .5 || textAlpha > .5)));
     // Leave the opening frame still until the expanding banner has fully settled.
     // An explicit play click remains available before that point and in reduced motion.
     if (!visible && !docked) manualStart = false;
     const playbackReady = docked || staticStory || q >= .24 || manualStart;
-    const playerVisible = docked || (visible && !dockDismissed);
+    const playerVisible = docked || (visible && (!afterSpace || !dockDismissed));
     if (videoAvailable && videoAlpha > .05 && playerVisible && playbackReady && !manualPause && previewVisible && !document.querySelector('#detail-dialog[open]') && document.visibilityState === 'visible') {
       if (video.paused) playVideo();
     } else if (!video.paused) video.pause();
-    const probe = y + metrics.viewport * .3;
+    const readingTop = docked ? metrics.splitLine : 0;
+    const probe = y + readingTop + (metrics.viewport - readingTop) * .3;
     const currentSection = probe >= metrics.information.top ? 'information' : probe >= metrics.reviews.top ? 'reviews'
       : probe >= metrics.cases.top ? 'cases' : probe >= metrics.space.top ? 'centers' : probe >= metrics.doctors.top ? 'doctors'
       : staticStory ? (probe >= metrics.questions.top ? 'questions' : probe >= metrics.philosophy.top ? 'philosophy' : 'top')
@@ -362,9 +369,13 @@
     // The information title overhangs its section. Its reveal transform is
     // temporary, so measure the layout offset and leave room below the menu.
     const titleOffset = id === 'information' ? (element.querySelector('[data-node-id="986:263"]')?.offsetTop || 0) * metrics.scale - 12 : 0;
+    const lowerSection = ['cases', 'reviews', 'information'].includes(id);
+    // A section shortcut can scroll past the tour before it has been viewed.
+    if (lowerSection && (!spaceVisited || !videoAvailable)) dockDismissed = true;
+    const topInset = lowerSection && !dockDismissed ? metrics.splitLine : metrics.headerHeight;
     const top = !staticStory && position !== undefined
       ? metrics.intro.top + position * (metrics.intro.height - metrics.viewport)
-      : scrollY + element.getBoundingClientRect().top + titleOffset - 80 * metrics.scale;
+      : scrollY + element.getBoundingClientRect().top + titleOffset - topInset;
     scrollTo({ top: Math.max(0, top), behavior: staticStory || instant ? 'instant' : 'smooth' });
     if (staticStory || instant) measure();
     return true;

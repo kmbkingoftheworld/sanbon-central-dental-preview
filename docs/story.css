@@ -82,15 +82,17 @@
 .space-stage.has-video .space-marker{color:#fff;background:#14273b99;padding:10px 18px;border-radius:30px;text-shadow:0 1px 6px #0008}
 .space-play{position:absolute;bottom:42px;right:145px;padding:13px 24px;border:1px solid #fff8;border-radius:30px;background:#12243b9c;color:#fff;font-size:18px;display:none}
 .space-stage.has-video .space-play{display:block;opacity:var(--space-video-alpha,0)}
-/* Keep all three controls reachable when the PC window is short. */
-.space-dock{position:fixed;z-index:25;top:var(--dock-top,94px);left:16px;width:min(48vw,calc((100dvh - var(--dock-top,94px) - 70px)*.5*16/9));min-width:280px;overflow:hidden;border:1px solid #ffffff30;border-radius:10px;background:#111d26;color:#fff;box-shadow:0 8px 32px #10203138}
+/* The document keeps its native scrollbar below the fixed video pane. */
+.space-split{scroll-padding-top:var(--space-split-line)}
+.space-dock{position:fixed;z-index:25;inset:var(--space-header-height) 0 auto;height:calc(var(--space-split-line) - var(--space-header-height));display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden;background:#111d26;color:#fff;border-bottom:1px solid #304351}
 .space-dock[hidden]{display:none}
-.space-dock .space-video{position:relative;display:block;inset:auto;width:100%;height:auto;max-height:max(0px,calc(100dvh - var(--dock-top,94px) - 70px));aspect-ratio:16/9;object-fit:contain;transform:none;opacity:1}
-.space-dock-controls{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#182934}
-.space-dock-controls button{position:static;display:block;opacity:1;padding:6px 10px;border:1px solid #ffffff40;border-radius:5px;background:transparent;color:#fff;font:500 13px/1.4 Pretendard,sans-serif;cursor:pointer;white-space:nowrap}
+.space-dock .space-video{position:static;display:block;width:100%;height:100%;min-height:0;object-fit:contain;transform:none;opacity:1}
+.space-dock-controls{display:flex;align-items:center;gap:8px;padding:4px clamp(8px,3vw,48px);background:#182934}
+.space-dock-controls button{position:static;display:block;opacity:1;min-height:34px;padding:5px 12px;border:1px solid #ffffff40;border-radius:5px;background:transparent;color:#fff;font:500 14px/1.4 Pretendard,sans-serif;cursor:pointer;white-space:nowrap}
 .space-dock-controls button:hover{background:#ffffff14}
 .space-dock-controls button:focus-visible{outline:3px solid #e9ad65;outline-offset:2px}
 .space-dock-controls button:last-child{margin-left:auto;border-color:transparent}
+@media (pointer:coarse){.space-dock-controls button{min-height:44px}}
 .space-stage.video-docked .space-marker{opacity:0}
 .space-stage.tour-video .space-play{bottom:calc(24px + var(--space-inset,0px))}
 .space-stage.tour-video .space-marker{bottom:calc(32px + var(--space-inset,0px))}
