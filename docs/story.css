@@ -34,6 +34,9 @@
 .intro-scroll-hint{position:absolute;bottom:45px;left:50%;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:16px;color:#294b78;font-size:18px;letter-spacing:.4px;opacity:var(--hint-alpha,.8)}
 .intro-scroll-hint i{display:block;width:1px;height:50px;background:currentColor;transform-origin:top;animation:scrollLine 2s ease infinite}
 .story-active #doctors{padding:180px 0 150px;height:1450px;background:#eeece6}
+@media (min-width:1024px){
+ .story-active #doctors{padding-top:212px}
+}
 .story-active #doctors [data-node-id="986:425"]{font-size:44px;line-height:1.5}
 .story-active #doctors [data-node-id="986:421"]{gap:54px}
 .story-active #doctors .reveal{transition-timing-function:cubic-bezier(.2,.75,.15,1);transition-duration:var(--motion-duration,1000ms)}
