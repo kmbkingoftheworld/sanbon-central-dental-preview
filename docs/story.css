@@ -143,4 +143,4 @@
 .story-reduced .space-stage.tour-video .space-play{bottom:24px}
 .story-reduced .space-window{clip-path:none}
 .story-reduced .space-artwork a,.story-reduced .space-artwork button,.story-reduced .space-artwork [data-node-id="986:552"],.story-reduced .space-artwork [data-node-id="986:553"],.story-reduced .space-artwork [data-node-id="986:556"],.story-reduced .space-artwork [data-node-id="986:557"]{visibility:hidden}
-@media(prefers-reduced-motion:reduce){.intro-scroll-hint i{animation:none}}
+.story-reduced .intro-scroll-hint i{animation:none}

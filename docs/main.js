@@ -1,11 +1,10 @@
 const params=new URLSearchParams(location.search);
-const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-const motion=params.get('motion')==='preview'||(!['off','reduce'].includes(params.get('motion'))&&!reduced.matches);
+const motion = !['off', 'reduce'].includes(params.get('motion'));
 const scaleContainer=document.querySelector('.page-scale');
 let lastScale;
 function fit(){const next=Math.min(1,document.documentElement.getBoundingClientRect().width/1920);const nextY=lastScale?scrollY*next/lastScale:scrollY;document.documentElement.style.setProperty('--page-scale',next);if(lastScale&&lastScale!==next&&!document.documentElement.classList.contains('story-active'))scrollTo(0,nextY);lastScale=next;}
 fit();addEventListener('resize',fit);
-if(params.get('motion')==='preview')document.documentElement.classList.add('explicit-motion');
+if (motion) document.documentElement.classList.add('explicit-motion');
 document.documentElement.style.setProperty('--motion-duration',Math.max(400,Math.min(1600,Number(params.get('duration'))||850))+'ms');
 let observer;
 Promise.all([document.fonts.ready,...[...document.images].filter(i=>i.getAttribute('fetchpriority')==='high').map(i=>i.decode().catch(()=>{}))]).then(()=>{

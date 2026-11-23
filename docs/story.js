@@ -2,8 +2,7 @@
   'use strict';
   const params = new URLSearchParams(location.search);
   if (params.get('motion') === 'off') return;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const staticStory = params.get('motion') === 'reduce' || (reduced.matches && params.get('motion') !== 'preview');
+  const staticStory = params.get('motion') === 'reduce';
   const config = window.SANBON_STORY || {}, root = document.documentElement;
   const hero = document.querySelector('#top'), philosophy = document.querySelector('#philosophy');
   const doctors = document.querySelector('#doctors'), centers = document.querySelector('#centers'), cases = document.querySelector('#cases');
