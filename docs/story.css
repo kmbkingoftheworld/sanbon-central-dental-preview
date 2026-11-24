@@ -31,8 +31,6 @@
 .question-number{position:absolute;left:26px;top:37px;font-size:17px;line-height:1;color:#8a9cae;letter-spacing:2px}
 .question-card h3{font-size:30px;line-height:1.4;margin:0 0 22px;letter-spacing:-1px;color:#294b78;white-space:pre-line}
 .question-card p{font-size:22px;line-height:1.65;color:#5a6269;word-break:keep-all;white-space:pre-line}
-.intro-scroll-hint{position:absolute;bottom:45px;left:50%;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:16px;color:#294b78;font-size:18px;letter-spacing:.4px;opacity:var(--hint-alpha,.8)}
-.intro-scroll-hint i{display:block;width:1px;height:50px;background:currentColor;transform-origin:top;animation:scrollLine 2s ease infinite}
 .story-active #doctors{padding:180px 0 150px;height:1450px;background:#eeece6}
 @media (min-width:1024px){
  .story-active #doctors{padding-top:212px}
@@ -196,7 +194,6 @@
 .story-compact .space-copy{--copy-bottom:80px;gap:52px}
 .story-compact .space-copy [data-node-id="986:549"]{font-size:28px}
 .story-compact .space-copy [data-node-id="986:550"]{font-size:18px}
-@keyframes scrollLine{0%,100%{transform:scaleY(.4);opacity:.5}50%{transform:scaleY(1);opacity:1}}
 .story-reduced .intro-story,.story-reduced .intro-stage{height:auto}
 .story-reduced .intro-stage,.story-reduced .space-stage{position:relative}
 .story-reduced .intro-stage>#top,.story-reduced .intro-stage>#philosophy,.story-reduced .story-questions{position:relative;inset:auto;min-height:var(--story-height,900px);height:auto;opacity:1;transform:none}
@@ -204,12 +201,10 @@
 .story-reduced #top [data-node-id="986:23"]{opacity:1;transform:translateY(-50%)}
 .story-reduced #philosophy [data-node-id="986:488"]{transform:translateY(-50%)}
 .story-reduced .question-card{opacity:1;transform:none}
-.story-reduced .intro-scroll-hint{display:none}
 .story-reduced #centers{height:var(--story-height,900px)}
 .story-reduced .space-copy,.story-reduced .space-veil{opacity:1;transform:none}
 .story-reduced .space-marker{display:none}
 .story-reduced .space-stage.tour-video .space-play{bottom:24px}
 .story-reduced .space-window{clip-path:none}
 .story-reduced .space-artwork a,.story-reduced .space-artwork button,.story-reduced .space-artwork [data-node-id="986:552"],.story-reduced .space-artwork [data-node-id="986:553"],.story-reduced .space-artwork [data-node-id="986:556"],.story-reduced .space-artwork [data-node-id="986:557"]{visibility:hidden}
-.story-reduced .intro-scroll-hint i{animation:none}
 .story-reduced .story-header,.story-reduced .story-header header>img{transition:none}

@@ -1,0 +1,235 @@
+/* Keep the guide at reading size inside the scaled 1920px artwork. */
+.scroll-guide {
+  position: absolute;
+  inset: 0;
+  zoom: calc(1 / var(--page-scale, 1));
+  pointer-events: none;
+  opacity: var(--hint-alpha, 1);
+}
+.scroll-guide[inert], .detail-open .scroll-guide {
+  visibility: hidden;
+  --guide-play-state: paused;
+}
+.scroll-guide-link {
+  position: absolute;
+  left: 50%;
+  bottom: max(clamp(16px, 3.5vh, 36px), calc(env(safe-area-inset-bottom, 0px) + 12px));
+  translate: -50% 0;
+  display: grid;
+  border-radius: 50%;
+  pointer-events: auto;
+  text-decoration: none;
+}
+.scroll-guide-link:hover { filter: none; }
+.scroll-guide-link:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 9px #17364b;
+}
+.scroll-guide-badge {
+  --ink: #f8fcfa;
+  --accent: #a7e7d7;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--ink);
+  font: 600 12px/1.25 Pretendard, "Malgun Gothic", sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.scroll-guide-label span { display: block; }
+.scroll-guide-mark,
+.scroll-guide-mark::before,
+.scroll-guide-mark::after { box-sizing: border-box; }
+.scroll-guide-mark { position: relative; display: block; flex: none; }
+
+/* Folded orange tab. The point aligns with the direction of the next screen. */
+[data-design="tab"] .scroll-guide-link {
+  border-radius: 5px;
+  filter: drop-shadow(0 3px 7px #17110c55);
+}
+[data-design="tab"] .scroll-guide-link:focus-visible { filter: none; }
+[data-design="tab"] .scroll-guide-badge {
+  --ink: #35200d;
+  min-height: 54px;
+  padding: 8px 20px 15px 16px;
+  gap: 9px;
+  border-radius: 5px 0 5px 5px;
+  background: linear-gradient(115deg, #ffbb60, #ffa044 70%);
+  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% calc(100% - 7px),
+    calc(50% + 8px) calc(100% - 7px), 50% 100%, calc(50% - 8px) calc(100% - 7px), 0 calc(100% - 7px));
+  font-size: 14px;
+  letter-spacing: -.025em;
+  pointer-events: auto;
+}
+[data-design="tab"] .scroll-guide-badge::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: 11px;
+  height: 11px;
+  border-bottom-left-radius: 2px;
+  background: #c56f26;
+}
+[data-design="tab"] .scroll-guide-label span { display: inline; }
+[data-design="tab"] .scroll-guide-mark {
+  width: 15px;
+  height: 21px;
+  border: 1.7px solid currentColor;
+  border-radius: 8px;
+}
+[data-design="tab"] .scroll-guide-mark::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+/* The arrow tip is the native cursor hotspot. The same link stays visible
+   at the foot of the scene for touch, keyboard and high-contrast users. */
+@media (forced-colors: none) {
+  .scroll-mouse.story-active [data-design="tab"] .scroll-guide-link {
+    inset: 0;
+    translate: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: max(clamp(16px, 3.5vh, 36px), calc(env(safe-area-inset-bottom, 0px) + 12px));
+    border-radius: 0;
+    filter: none;
+    cursor: url("assets/clinic/scroll-pointer.png") 50 73, pointer;
+    cursor: image-set(url("assets/clinic/scroll-pointer.png") 1x, url("assets/clinic/scroll-pointer@2x.png") 2x) 50 73, pointer;
+  }
+  .scroll-mouse.story-active [data-design="tab"] .scroll-guide-link:hover:not(:focus-visible) .scroll-guide-badge {
+    opacity: 0;
+  }
+  .scroll-mouse.story-active [data-design="tab"] .scroll-guide-link:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  .scroll-mouse.story-active [data-design="tab"] .scroll-guide-link:focus-visible .scroll-guide-badge {
+    outline: 3px solid white;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 9px #17364b;
+    clip-path: none;
+  }
+  .scroll-mouse.story-active [data-design="tab"] .scroll-guide-badge { pointer-events: none; }
+}
+
+/* A round navy seal with a moving mouse wheel. */
+[data-design="round"] .scroll-guide-badge {
+  width: 86px;
+  height: 86px;
+  flex-direction: column;
+  border: 1px solid #acc7ca;
+  border-radius: 50%;
+  background: #19394d;
+  box-shadow: inset 0 0 0 4px #19394d, inset 0 0 0 5px #476073, 0 3px 14px #10293635;
+}
+[data-design="round"] .scroll-guide-mark {
+  width: 15px;
+  height: 22px;
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+}
+[data-design="round"] .scroll-guide-mark::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: calc(50% - 1.5px);
+  width: 3px;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* An ivory capsule with a teal arrow and a single line of type. */
+[data-design="capsule"] .scroll-guide-link { border-radius: 99px; }
+[data-design="capsule"] .scroll-guide-badge {
+  --ink: #203c44;
+  min-height: 46px;
+  padding: 6px 17px 6px 7px;
+  gap: 9px;
+  border: 1px solid #b9c9bd;
+  border-radius: 99px;
+  background: #faf8ec;
+  box-shadow: 0 3px 14px #10293630;
+  font-size: 13px;
+}
+[data-design="capsule"] .scroll-guide-label span { display: inline; }
+[data-design="capsule"] .scroll-guide-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #f4fff8;
+  background: #3a6d64;
+}
+[data-design="capsule"] .scroll-guide-mark::before {
+  content: "";
+  width: 11px;
+  height: 14px;
+  background: currentColor;
+  clip-path: polygon(44% 0, 56% 0, 56% 79%, 91% 50%, 100% 59%, 50% 100%, 0 59%, 9% 50%, 44% 79%);
+}
+
+/* A folded-end ribbon with two descending chevrons. */
+[data-design="ribbon"] .scroll-guide-link { border-radius: 5px; }
+[data-design="ribbon"] .scroll-guide-badge {
+  --accent: #baf2dc;
+  width: 71px;
+  height: 89px;
+  flex-direction: column-reverse;
+  gap: 7px;
+  padding-bottom: 7px;
+  background: #235b59;
+  border-top: 3px solid var(--accent);
+  border-radius: 5px 5px 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 89%, 0 100%);
+}
+[data-design="ribbon"] .scroll-guide-mark { width: 14px; height: 14px; }
+[data-design="ribbon"] .scroll-guide-mark::before,
+[data-design="ribbon"] .scroll-guide-mark::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  border: solid var(--accent);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+[data-design="ribbon"] .scroll-guide-mark::before { top: -2px; opacity: .55; }
+[data-design="ribbon"] .scroll-guide-mark::after { top: 3px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .story-active:not(.story-reduced) :is([data-design="round"], [data-design="tab"]) .scroll-guide-mark::before {
+    animation: guide-wheel 1.65s ease-in-out infinite;
+    animation-play-state: var(--guide-play-state, running);
+  }
+  .story-active:not(.story-reduced) [data-design="capsule"] .scroll-guide-mark::before,
+  .story-active:not(.story-reduced) [data-design="ribbon"] .scroll-guide-mark {
+    animation: guide-arrow 1.65s ease-in-out infinite;
+    animation-play-state: var(--guide-play-state, running);
+  }
+}
+@keyframes guide-wheel {
+  0%, 12% { transform: translateY(0); opacity: .95; }
+  67% { transform: translateY(6px); opacity: 1; }
+  82% { transform: translateY(6px); opacity: 0; }
+  83% { transform: translateY(0); opacity: 0; }
+  100% { transform: translateY(0); opacity: .95; }
+}
+@keyframes guide-arrow {
+  0%, 15%, 100% { transform: translateY(-2px); }
+  62% { transform: translateY(2px); }
+}

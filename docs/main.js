@@ -1,6 +1,7 @@
 const params=new URLSearchParams(location.search);
 const motion = !['off', 'reduce'].includes(params.get('motion'));
 const scaleContainer=document.querySelector('.page-scale');
+const introBanner=document.querySelector('.pre-main');
 let lastScale;
 function fit(){const next=Math.min(1,document.documentElement.getBoundingClientRect().width/1920);const nextY=lastScale?scrollY*next/lastScale:scrollY;document.documentElement.style.setProperty('--page-scale',next);if(lastScale&&lastScale!==next&&!document.documentElement.classList.contains('story-active'))scrollTo(0,nextY);lastScale=next;}
 fit();addEventListener('resize',fit);
@@ -35,14 +36,26 @@ function reportLayoutPosition(){
  if(id===lastLayoutSection)return;
  lastLayoutSection=id;parent.postMessage({type:'preview-active-section',id},'*');
 }
-function updateScroll(){scheduled=false;reportLayoutPosition();const showTop=scrollY>400;if(topButton.inert===showTop)topButton.inert=!showTop;topButton.classList.toggle('visible',showTop);if(motion&&!document.documentElement.classList.contains('story-active')){const plan=document.querySelector('.plan-image');const r=plan.getBoundingClientRect();const progress=Math.max(-1,Math.min(1,(r.top+r.height/2-innerHeight/2)/innerHeight));plan.style.setProperty('--plan-shift',`${progress*22}px`);}}
+function updateScroll(){
+ scheduled=false;
+ reportLayoutPosition();
+ const showTop=scrollY>(introBanner?.offsetHeight||0)+400;
+ if(topButton.inert===showTop)topButton.inert=!showTop;
+ topButton.classList.toggle('visible',showTop);
+ if(motion&&!document.documentElement.classList.contains('story-active')){
+  const plan=document.querySelector('.plan-image');
+  const r=plan.getBoundingClientRect();
+  const progress=Math.max(-1,Math.min(1,(r.top+r.height/2-innerHeight/2)/innerHeight));
+  plan.style.setProperty('--plan-shift',`${progress*22}px`);
+ }
+}
 function scheduleScrollUpdate(){if(!scheduled){scheduled=true;requestAnimationFrame(updateScroll);}}
 addEventListener('scroll',scheduleScrollUpdate,{passive:true});
 addEventListener('resize',scheduleScrollUpdate);updateScroll();
 // Keep section links, keyboard focus and browser history on the same destination.
 let navigationToken=0, navigationStarted=false;
 function cancelNavigationFocus(){navigationStarted=true;navigationToken++;}
-for(const type of ['wheel','touchstart','pointerdown','keydown'])addEventListener(type,cancelNavigationFocus,{passive:true});
+for(const type of ['wheel','touchstart','pointerdown','keydown'])addEventListener(type,cancelNavigationFocus,{capture:true,passive:true});
 function focusSection(target,token){
  const heading=target.id==='main'?target:target.querySelector('h1,h2')||target;
  let lastY=scrollY,stable=0,frames=0;
@@ -62,8 +75,6 @@ function navigateSection(id,{focus=false,remember=false,instant=false,review=fal
  if(!target||!['main','top','philosophy','questions','doctors','centers','cases','reviews','information'].includes(id))return false;
  navigationStarted=true;
  const token=++navigationToken;
- const navigate=()=>{
- if(token!==navigationToken)return;
  // An explicit section choice also leaves the current detail view.
  const openDetail=document.querySelector('#detail-dialog[open]');
  openDetail?.close();
@@ -74,26 +85,29 @@ function navigateSection(id,{focus=false,remember=false,instant=false,review=fal
   const header=document.querySelector('.story-header');
   // Use the title's layout offset, not its temporary reveal translation.
   const titleOffset=id==='information'?(target.querySelector('[data-node-id="986:263"]')?.offsetTop||0)*lastScale-12:0;
-  const top=['main','top'].includes(id)?0:scrollY+target.getBoundingClientRect().top+titleOffset-(header?.getBoundingClientRect().height||0);
+  const top=['main','top'].includes(id)
+   ? scrollY+scaleContainer.getBoundingClientRect().top
+   : scrollY+target.getBoundingClientRect().top+titleOffset-(header?.getBoundingClientRect().height||0);
   scrollTo({top:Math.max(0,top),behavior:instant||!motion?'instant':'smooth'});
  }
  if(focus)focusSection(target,token);
  // Native dialog.close() can restore focus into this iframe. Return it to the
  // review control only when that control explicitly requested this navigation.
  if(review&&openDetail)parent.postMessage({type:'preview-section-focus',id},'*');
- };
- if(document.documentElement.classList.contains('pre-main-open')&&window.dismissPreMain){
-  window.dismissPreMain().then(navigate);
- }else navigate();
  return true;
 }
 document.addEventListener('click',event=>{
  if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
  const anchor=event.target.closest('a[href^="#"]');
  if(!anchor||anchor.hasAttribute('download')||(anchor.target&&anchor.target!=='_self'))return;
- if(navigateSection(anchor.hash.slice(1),{focus:true,remember:true}))event.preventDefault();
+ const instant=anchor.classList.contains('scroll-guide-link')&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(navigateSection(anchor.hash.slice(1),{focus:true,remember:true,instant}))event.preventDefault();
 });
-addEventListener('hashchange',()=>navigateSection(location.hash.slice(1)||'top',{focus:true,instant:true}));
+addEventListener('hashchange',()=>{
+ // On Back to the unlinked page, preserve the browser's saved banner or reading position.
+ if(!location.hash&&introBanner){cancelNavigationFocus();return;}
+ navigateSection(location.hash.slice(1)||'top',{focus:true,instant:true});
+});
 // Wait for the story DOM and font measurements before restoring an incoming link.
 const pageLoaded=document.readyState==='complete'?Promise.resolve():new Promise(resolve=>addEventListener('load',resolve,{once:true}));
 Promise.all([pageLoaded,document.fonts.ready]).then(()=>{

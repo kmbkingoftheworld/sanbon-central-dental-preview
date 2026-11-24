@@ -17,7 +17,8 @@
   headerDesign.className = 'story-header-design';
   headerDesign.append(hero.querySelector('header'));
   header.append(headerDesign);
-  document.querySelector('.page-scale').before(header);
+  const pageScale = document.querySelector('.page-scale');
+  pageScale.before(header);
 
   const intro = document.createElement('section');
   intro.id = 'intro-story'; intro.className = 'intro-story';
@@ -48,9 +49,7 @@
   });
   stage.append(questions);
   const cards = [...grid.children];
-  const hint = document.createElement('div'); hint.className = 'intro-scroll-hint';
-  hint.innerHTML = '<span>스크롤하여 다음 이야기</span><i></i>'; hint.setAttribute('aria-hidden', 'true');
-  stage.append(hint);
+  const scrollGuide = hero.querySelector('.scroll-guide');
 
   // Each specialty is tied to a distinct scroll interval, never to a shared timer.
   const doctorCards = ['986:439', '986:471', '986:455'].map(id => doctors.querySelector(`[data-node-id="${id}"]`));
@@ -199,11 +198,11 @@
     if (element.getAttribute('aria-hidden') !== String(hide)) element.setAttribute('aria-hidden', String(hide));
   }
   function measure(preservePosition = false) {
-    // A closing dialog can briefly reserve a scrollbar gutter while the canvas keeps its zoom.
-    const scale = stage.getBoundingClientRect().width / 1920;
+    // Measure the scaled canvas, including when the opening banner is on screen.
+    const scale = pageScale.getBoundingClientRect().width / 1920;
     if (!scale || innerHeight < 1) return;
     let anchor;
-    if (preservePosition && metrics) {
+    if (preservePosition && metrics && renderedY >= metrics.intro.top - 1) {
       const readingY = renderedY + (docked ? metrics.splitLine : 0);
       const key = ['intro', 'doctors', 'space', 'cases', 'reviews', 'information'].filter(key => metrics[key].top <= readingY).at(-1) || 'intro';
       anchor = { key, ratio: clamp((readingY - metrics[key].top) / metrics[key].height) };
@@ -212,7 +211,7 @@
       }
     }
     const height = innerHeight / scale;
-    const headerHeight = header.getBoundingClientRect().bottom;
+    const headerHeight = parseFloat(getComputedStyle(header).height);
     css(root, { 'story-height': height + 'px', 'space-fit': Math.max(.35, Math.min(1, (height - 240) / 830)),
       'space-header-height': headerHeight + 'px', 'space-pane-third': (innerHeight - headerHeight) / 3 + 'px' });
     // The pane has an explicit CSS height even while hidden. Its edge also drives anchors and docking.
@@ -241,8 +240,10 @@
       'hero-alpha': 1 - heroOut, 'hero-y': -56 * heroOut + 'px', 'hero-scale': 1 + .018 * heroOut,
       'photo-alpha': 1 - smooth(p, .16, .31), 'photo-scale': 1.045 - .045 * smooth(p, 0, .34),
       'philosophy-alpha': philoIn * (1 - philoOut), 'philosophy-y': 54 * (1 - philoIn) - 44 * philoOut + 'px',
-      'questions-alpha': questionIn, 'questions-y': 38 * (1 - questionIn) + 'px', 'hint-alpha': (1 - smooth(p, .06, .16)) * .8
+      'questions-alpha': questionIn, 'questions-y': 38 * (1 - questionIn) + 'px',
+      'hint-alpha': staticStory ? 1 : 1 - smooth(p, .01, .07)
     });
+    if (scrollGuide) hidden(scrollGuide, !staticStory && p >= .07);
     hidden(hero, !staticStory && p > .225);
     hidden(philosophy, !staticStory && (philoIn * (1 - philoOut) < .05));
     hidden(questions, !staticStory && questionIn < .05);
@@ -402,7 +403,7 @@
     if (!element || !['top', 'philosophy', 'questions', 'doctors', 'centers', 'cases', 'reviews', 'information'].includes(id)) return false;
     cancelDoctorFocus();
     measure();
-    const position = { top: 0, philosophy: .41, questions: .92 }[id];
+    const position = { philosophy: .41, questions: .92 }[id];
     // The information title overhangs its section. Its reveal transform is
     // temporary, so measure the layout offset and leave room below the menu.
     const titleOffset = id === 'information' ? (element.querySelector('[data-node-id="986:263"]')?.offsetTop || 0) * metrics.scale - 12 : 0;
@@ -410,7 +411,7 @@
     // A section shortcut can scroll past the tour before it has been viewed.
     if (lowerSection && (!spaceVisited || !videoAvailable)) dockDismissed = true;
     const topInset = lowerSection && !dockDismissed ? metrics.splitLine : metrics.headerHeight;
-    const top = !staticStory && position !== undefined
+    const top = id === 'top' ? metrics.intro.top : !staticStory && position !== undefined
       ? metrics.intro.top + position * (metrics.intro.height - metrics.viewport)
       : scrollY + element.getBoundingClientRect().top + titleOffset - topInset;
     scrollTo({ top: Math.max(0, top), behavior: staticStory || instant ? 'instant' : 'smooth' });

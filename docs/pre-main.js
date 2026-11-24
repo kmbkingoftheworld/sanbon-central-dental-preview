@@ -1,38 +1,161 @@
 (() => {
- 'use strict';
- // Section links and the Figma layout comparison should open their destination directly.
- const motionMode = new URLSearchParams(location.search).get('motion');
- if (location.hash || motionMode === 'off') return;
- const root = document.documentElement, splash = document.createElement('dialog');
- const reduce = motionMode === 'reduce';
- splash.className = 'pre-main'; splash.setAttribute('aria-label', '산본중심치과 시작 화면');
- splash.innerHTML = '<img src="assets/clinic/pre-main-clinic.webp" width="2560" height="1227" alt="" decoding="async"><div class="pre-main-caption"><h2>수술 경력 15년의 수술 전문 치과의사<br>대학병원 교수 출신, 치주과 전문의<br>대표원장이 직접 집도</h2><p>친절하고 전문적인 진단<br>안전하고 튼튼한 임플란트<br>고난이도 뼈이식 재수술<br>대형 치과의 믿을 수 있는 AS</p></div><p class="pre-main-note">잠시 후 메인 페이지로 이동합니다</p><button class="pre-main-enter" type="button">메인 바로 보기 →</button>';
- document.body.append(splash);
- let timer, completed = false, resolveClosed;
- const closed = new Promise(resolve => { resolveClosed = resolve; });
- const finish = () => {
-  if (completed) return;
-  completed = true; clearTimeout(timer); clearTimeout(fallback);
-  splash.classList.add('is-leaving');
-  const close = () => {
-   if (!splash.isConnected) return;
-   splash.close(); splash.remove(); root.classList.remove('pre-main-open');
-   dispatchEvent(new Event('resize')); resolveClosed();
-  };
-  if (reduce) close(); else {
-   splash.addEventListener('transitionend', event => { if (event.target === splash && event.propertyName === 'opacity') close(); }, { once: true });
-   setTimeout(() => { if (splash.isConnected) close(); }, 380);
+  const banner = document.querySelector('.pre-main');
+  if (!banner) return;
+  const mode = new URLSearchParams(location.search).get('motion');
+
+  // Section links and the original layout comparison open at their own destination.
+  if (location.hash || mode === 'off') {
+    banner.remove();
+    return;
   }
- };
- // Explicit section selection can end the introduction using the same short fade.
- // All callers wait for one close, including a second selection during the fade.
- window.dismissPreMain = () => { finish(); return closed; };
- splash.querySelector('button').addEventListener('click', finish);
- splash.addEventListener('cancel', event => { event.preventDefault(); finish(); });
- root.classList.add('pre-main-open'); splash.showModal();
- // Count two seconds from the decoded photo, not from the start of its download.
- const fallback = setTimeout(finish, 10000);
- splash.querySelector('img').decode().then(() => {
-  if (!completed) { clearTimeout(fallback); splash.classList.add('is-ready'); timer = setTimeout(finish, 2000); }
- }).catch(finish);
+
+  const photo = banner.querySelector('img');
+  const showCaption = () => banner.classList.add('photo-missing');
+  photo.addEventListener('error', showCaption, { once: true });
+  if (photo.complete && !photo.naturalWidth) showCaption();
+
+  const hero = document.getElementById('top');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const prefersStill = () => mode === 'reduce';
+  const modified = event => event.ctrlKey || event.metaKey || event.altKey || event.shiftKey;
+  const downWheel = event => !modified(event) && event.deltaY > Math.abs(event.deltaX);
+  let cover = null, phase = null, skipRest = false;
+  let zooms = [];
+
+  // The opaque ring and its contents share the viewport center. Only change the
+  // real scroll position when the aperture is closed, including the sticky menu.
+  async function enterMain(options = {}) {
+    if (cover) return;
+    const arrive = () => {
+      if (typeof navigateSection === 'function') navigateSection('top', { ...options, instant: true });
+      else document.querySelector('.page-scale').scrollIntoView({ block: 'start', behavior: 'instant' });
+    };
+    if (prefersStill() || !hero || !banner.animate) { arrive(); return; }
+
+    cover = document.createElement('div');
+    cover.className = 'entry-iris';
+    cover.setAttribute('aria-hidden', 'true');
+    const disc = document.createElement('div');
+    cover.append(disc);
+    document.body.append(cover);
+    document.documentElement.classList.add('entering-main');
+    skipRest = false;
+    const radius = Math.ceil(Math.hypot(cover.clientWidth, cover.clientHeight) / 2) + 2;
+    disc.style.width = disc.style.height = radius * 2 + 'px';
+    const aperture = [
+      { borderWidth: '0px', backgroundColor: 'rgba(16,21,29,0)' },
+      { offset: .78, borderWidth: radius * .78 + 'px', backgroundColor: 'rgba(16,21,29,.12)' },
+      { borderWidth: radius + 'px', backgroundColor: '#10151d' }
+    ];
+    const picture = [
+      { transform: 'scale(1)', opacity: 1 },
+      { offset: .55, transform: 'scale(.78)', opacity: .9 },
+      { transform: 'scale(.025)', opacity: 0 }
+    ];
+    async function play(scene, opening) {
+      if (skipRest) return;
+      const timing = {
+        duration: opening ? 610 : 420, direction: opening ? 'reverse' : 'normal',
+        easing: 'cubic-bezier(.38,0,.73,.78)', fill: 'both'
+      };
+      zooms = [scene.animate(picture, timing)];
+      const menu = opening && document.querySelector('.story-header');
+      if (menu) zooms.push(menu.animate(picture, timing));
+      phase = disc.animate(aperture, timing);
+      try { await phase.finished; }
+      finally {
+        zooms.forEach(zoom => zoom.cancel());
+        zooms = [];
+        phase.cancel();
+        phase = null;
+      }
+    }
+    cover.addEventListener('wheel', event => {
+      if (downWheel(event)) holdWheel(event);
+      else if (!modified(event)) event.preventDefault();
+    }, { passive: false });
+    let arrived = false;
+    try {
+      await play(banner, false);
+      arrive();
+      arrived = true;
+      // Include the backing artwork that shows through the hero photograph.
+      await play(hero.closest('.intro-stage') || hero, true);
+    } finally {
+      cover.remove();
+      cover = null;
+      document.documentElement.classList.remove('entering-main');
+      if (!arrived) arrive();
+    }
+  }
+
+  function finishEntry() {
+    skipRest = true;
+    zooms.forEach(zoom => zoom.finish());
+    phase?.finish();
+  }
+  window.addEventListener('resize', finishEntry);
+  window.addEventListener('pagehide', finishEntry);
+  reduced.addEventListener('change', finishEntry);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) finishEntry(); });
+
+  // A trackpad can keep sending wheel events after the pointer is over the main page.
+  // Consume only the tail of the gesture that advanced the opening banner.
+  let wheelEnd;
+  function releaseWheel() {
+    clearTimeout(wheelEnd);
+    window.removeEventListener('wheel', finishWheelGesture, true);
+  }
+  function finishWheelGesture(event) {
+    if (!downWheel(event)) { releaseWheel(); return; }
+    event.preventDefault();
+    clearTimeout(wheelEnd);
+    wheelEnd = setTimeout(releaseWheel, 160);
+  }
+  function holdWheel(event) {
+    finishWheelGesture(event);
+    window.addEventListener('wheel', finishWheelGesture, { capture: true, passive: false });
+  }
+  banner.addEventListener('wheel', event => {
+    if (event.defaultPrevented || !downWheel(event)) return;
+    holdWheel(event);
+    enterMain();
+  }, { passive: false });
+
+  banner.querySelector('.scroll-guide-link').addEventListener('click', event => {
+    if (event.defaultPrevented || event.button !== 0 || modified(event)) return;
+    event.preventDefault();
+    enterMain({ focus: true, remember: true });
+  });
+  window.addEventListener('keydown', event => {
+    if (event.defaultPrevented || modified(event)) return;
+    if (cover) {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) event.preventDefault();
+      return;
+    }
+    if (!['ArrowDown', 'PageDown', ' '].includes(event.key) || banner.getBoundingClientRect().bottom <= 1) return;
+    // Browser Back can restore the banner while focus is still on the main heading.
+    if (!banner.contains(event.target) && event.target.closest?.('a,button,input,select,textarea,[contenteditable]')) return;
+    event.preventDefault();
+    enterMain({ focus: true });
+  });
+
+  // Recognize a single vertical swipe on the cover; preserve horizontal gestures and pinch zoom.
+  let touchStart;
+  banner.classList.add('has-scroll-entry');
+  banner.addEventListener('touchstart', event => {
+    touchStart = event.touches.length === 1 ? event.touches[0] : null;
+  }, { passive: true });
+  banner.addEventListener('touchcancel', () => { touchStart = null; });
+  banner.addEventListener('touchend', event => {
+    const start = touchStart;
+    touchStart = null;
+    if (!start || event.touches.length) return;
+    const end = event.changedTouches[0];
+    const dy = start.clientY - end.clientY;
+    if (Math.abs(dy) < 30 || Math.abs(dy) <= Math.abs(start.clientX - end.clientX)) return;
+    if (dy > 0) enterMain();
+    else if (banner.getBoundingClientRect().top < 0)
+      banner.scrollIntoView({ block: 'start', behavior: prefersStill() ? 'instant' : 'smooth' });
+  }, { passive: true });
 })();
