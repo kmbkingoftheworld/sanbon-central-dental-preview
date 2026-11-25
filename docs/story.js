@@ -248,7 +248,7 @@
     hidden(philosophy, !staticStory && (philoIn * (1 - philoOut) < .05));
     hidden(questions, !staticStory && questionIn < .05);
     cards.forEach((card, i) => {
-      const revealStart = .68 + i * .07;
+      const revealStart = .68 + i * .08;
       const alpha = smooth(p, revealStart, revealStart + .03);
       css(card, { 'card-alpha': alpha, 'card-y': 62 * (1 - alpha) + 'px' });
       hidden(card, !staticStory && alpha < .05);
@@ -404,7 +404,7 @@
     if (!element || !['top', 'philosophy', 'questions', 'doctors', 'centers', 'cases', 'reviews', 'information'].includes(id)) return false;
     cancelDoctorFocus();
     measure();
-    const position = { philosophy: .41, questions: .92 }[id];
+    const position = { philosophy: .41, questions: .96 }[id];
     // The information title overhangs its section. Its reveal transform is
     // temporary, so measure the layout offset and leave room below the menu.
     const titleOffset = id === 'information' ? (element.querySelector('[data-node-id="986:263"]')?.offsetTop || 0) * metrics.scale - 12 : 0;
