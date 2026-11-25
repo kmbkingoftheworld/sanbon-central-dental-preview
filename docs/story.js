@@ -248,7 +248,8 @@
     hidden(philosophy, !staticStory && (philoIn * (1 - philoOut) < .05));
     hidden(questions, !staticStory && questionIn < .05);
     cards.forEach((card, i) => {
-      const alpha = smooth(p, .68 + i * .045, .77 + i * .045);
+      const revealStart = .68 + i * .07;
+      const alpha = smooth(p, revealStart, revealStart + .03);
       css(card, { 'card-alpha': alpha, 'card-y': 62 * (1 - alpha) + 'px' });
       hidden(card, !staticStory && alpha < .05);
     });
