@@ -29,14 +29,12 @@ html.detail-open{overflow:hidden;scrollbar-gutter:stable}
 [data-node-id="986:416"]{position:relative;left:auto;top:auto;width:1440px;margin:auto;padding:0;display:block}
 [data-node-id="986:417"]{display:none}
 [data-node-id="986:420"]{position:relative;left:auto;top:auto}
-/* Keep the tooth mark behind the portraits as their row enters and pins. */
+/* Show the tooth mark behind the portraits before they enter. */
 #doctors .f62{isolation:isolate}
 #doctors .f62::before{
  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
- background:url('assets/imgGroup7.svg') center / auto min(88%,511px) no-repeat;
- transition:opacity .18s ease-out
+ background:url('assets/imgGroup7.svg') center / auto min(88%,511px) no-repeat
 }
-#doctors .doctor-body .f62:not(:has(> .doctor-scroll-card:not([inert])))::before{opacity:0}
 [data-node-id="986:546"]{position:relative;left:240px;top:auto}
 /* The exported vector uses overlay blending; apply it at the HTML image boundary. */
 [data-node-id="986:552"]{mix-blend-mode:overlay}
