@@ -114,7 +114,7 @@
     stopFilm();
     const arrive = () => {
       if (typeof navigateSection === "function") navigateSection("top", { ...options, instant: true });
-      else document.querySelector(".page-scale").scrollIntoView({ block: "start", behavior: "instant" });
+      else hero.scrollIntoView({ block: "start", behavior: "instant" });
     };
     if (prefersStill() || !hero || !banner.animate) {
       arrive();
@@ -171,7 +171,7 @@
       arrive();
       arrived = true;
       resetFilm();
-      await play(hero.closest(".intro-stage") || hero, true);
+      await play(hero.querySelector(".specialty-panel") || hero, true);
     } finally {
       cover.remove();
       cover = null;

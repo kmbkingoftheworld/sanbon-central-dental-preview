@@ -14,18 +14,39 @@
   const headerDesign = document.createElement("div");
   headerDesign.className = "story-header-design";
   headerDesign.append(hero.querySelector("header"));
+  const headerNav = headerDesign.querySelector("nav");
+  const menuToggle = document.createElement("button");
+  headerNav.id = "clinic-navigation";
+  menuToggle.type = "button";
+  menuToggle.className = "specialty-menu-toggle";
+  menuToggle.textContent = "메뉴";
+  menuToggle.setAttribute("aria-controls", headerNav.id);
+  const setMenu = (open) => menuToggle.setAttribute("aria-expanded", String(open));
+  setMenu(false);
+  headerNav.before(menuToggle);
+  menuToggle.addEventListener("click", () => setMenu(menuToggle.getAttribute("aria-expanded") !== "true"));
+  headerNav.addEventListener("click", () => setMenu(false));
+  document.addEventListener("pointerdown", event => {
+    if (menuToggle.getAttribute("aria-expanded") === "true" && !headerDesign.contains(event.target)) setMenu(false);
+  }, { passive: true });
+  headerDesign.addEventListener("keydown", event => {
+    if (event.key === "Escape" && menuToggle.getAttribute("aria-expanded") === "true") {
+      setMenu(false);
+      menuToggle.focus({ preventScroll: true });
+    }
+  });
   header.append(headerDesign);
   const pageScale = document.querySelector(".page-scale");
-  pageScale.before(header);
+  document.getElementById("main").before(header);
   const intro = document.createElement("section");
   intro.id = "intro-story";
   intro.className = "intro-story";
   intro.setAttribute("aria-label", "20년 뒤를 위한 치료 이야기");
-  hero.before(intro);
+  philosophy.before(intro);
   const stage = document.createElement("div");
   stage.className = "intro-stage";
   intro.append(stage);
-  stage.append(hero, philosophy);
+  stage.append(philosophy);
   philosophy.querySelector('[data-node-id="986:490"] p:last-child').textContent = "해소하는 것에서 출발합니다.";
   const questions = document.createElement("section");
   questions.id = "questions";
@@ -56,7 +77,6 @@
   });
   stage.append(questions);
   const cards = [...grid.children];
-  const scrollGuide = hero.querySelector(".scroll-guide");
   const doctorCards = ["986:439", "986:471", "986:455"].map((id) => doctors.querySelector(`[data-node-id="${id}"]`));
   const doctorProgress = doctorCards.map(() => null);
   const doctorGroup = doctors.querySelector('[data-node-id="986:432"]');
@@ -208,6 +228,7 @@
   let visualIntro = null, visualSpace = null, lastFrame = null, pendingFrame = 0, renderedY = scrollY;
   const detailDialog = document.getElementById("detail-dialog");
   const responseMs = 64;
+  const philosophyStart = 0.35;
   const clamp = (value) => Math.max(0, Math.min(1, value));
   const smooth = (value, start, end) => {
     const t = clamp((value - start) / (end - start));
@@ -268,6 +289,7 @@
     const headerHeight = parseFloat(getComputedStyle(header).height);
     css(root, {
       "story-height": height + "px",
+      "intro-distance": 3.8 * (1 - philosophyStart) * height + "px",
       "space-fit": Math.max(0.35, Math.min(1, (height - 240) / 830)),
       "space-header-height": headerHeight + "px",
       "space-pane-third": (innerHeight - headerHeight) / 3 + "px"
@@ -306,21 +328,13 @@
     render(performance.now(), true);
   }
   function renderIntro(p) {
-    const heroOut = smooth(p, 0.12, 0.225), philoIn = smooth(p, 0.25, 0.35), philoOut = smooth(p, 0.49, 0.6), questionIn = smooth(p, 0.625, 0.71);
+    const philoIn = smooth(p, 0.25, 0.35), philoOut = smooth(p, 0.49, 0.6), questionIn = smooth(p, 0.625, 0.71);
     css(stage, {
-      "hero-alpha": 1 - heroOut,
-      "hero-y": -56 * heroOut + "px",
-      "hero-scale": 1 + 0.018 * heroOut,
-      "photo-alpha": 1 - smooth(p, 0.16, 0.31),
-      "photo-scale": 1.045 - 0.045 * smooth(p, 0, 0.34),
       "philosophy-alpha": philoIn * (1 - philoOut),
       "philosophy-y": 54 * (1 - philoIn) - 44 * philoOut + "px",
       "questions-alpha": questionIn,
-      "questions-y": 38 * (1 - questionIn) + "px",
-      "hint-alpha": staticStory ? 1 : 1 - smooth(p, 0.01, 0.07)
+      "questions-y": 38 * (1 - questionIn) + "px"
     });
-    if (scrollGuide) hidden(scrollGuide, !staticStory && p >= 0.07);
-    hidden(hero, !staticStory && p > 0.225);
     hidden(philosophy, !staticStory && philoIn * (1 - philoOut) < 0.05);
     hidden(questions, !staticStory && questionIn < 0.05);
     cards.forEach((card, i) => {
@@ -368,7 +382,7 @@
     }
     const elapsed = Math.max(0, time - (lastFrame ?? time));
     const blend = sync || staticStory ? 1 : -Math.expm1(-elapsed / responseMs);
-    const targetIntro = progress(metrics.intro), targetSpace = progress(metrics.space);
+    const targetIntro = philosophyStart + (1 - philosophyStart) * progress(metrics.intro), targetSpace = progress(metrics.space);
     const p = follow(visualIntro, targetIntro, onScreen(metrics.intro) ? blend : 1);
     if (p !== visualIntro) {
       renderIntro(p);
@@ -404,7 +418,10 @@
     if (marker.textContent !== markerText) marker.textContent = markerText;
     const spaceOnScreen = y >= metrics.space.top && y < metrics.space.top + metrics.space.height - 90;
     const lightIntro = staticStory ? y >= metrics.philosophy.top - 80 : p > 0.265;
-    header.classList.toggle("is-light", !docked && lightIntro && !(spaceOnScreen && (videoAlpha > 0.5 || textAlpha > 0.5)));
+    const overSpecialties = y < metrics.intro.top - metrics.headerHeight;
+    if (!overSpecialties && menuToggle.getAttribute("aria-expanded") === "true") setMenu(false);
+    header.classList.toggle("over-specialties", overSpecialties);
+    header.classList.toggle("is-light", !overSpecialties && !docked && lightIntro && !(spaceOnScreen && (videoAlpha > 0.5 || textAlpha > 0.5)));
     if (!visible && !docked) manualStart = false;
     const playbackReady = docked || staticStory || q >= 0.24 || manualStart;
     const playerVisible = docked || visible && (!afterSpace || !dockDismissed);
@@ -413,7 +430,7 @@
     } else if (!video.paused) video.pause();
     const readingTop = docked ? metrics.splitLine : 0;
     const probe = y + readingTop + (metrics.viewport - readingTop) * 0.3;
-    const currentSection = probe >= metrics.information.top ? "information" : probe >= metrics.reviews.top ? "reviews" : probe >= metrics.cases.top ? "cases" : probe >= metrics.space.top ? "centers" : probe >= metrics.doctors.top ? "doctors" : staticStory ? probe >= metrics.questions.top ? "questions" : probe >= metrics.philosophy.top ? "philosophy" : "top" : p >= 0.625 ? "questions" : p >= 0.25 ? "philosophy" : "top";
+    const currentSection = probe >= metrics.information.top ? "information" : probe >= metrics.reviews.top ? "reviews" : probe >= metrics.cases.top ? "cases" : probe >= metrics.space.top ? "centers" : probe >= metrics.doctors.top ? "doctors" : probe < metrics.intro.top ? "top" : staticStory ? probe >= metrics.questions.top ? "questions" : probe >= metrics.philosophy.top ? "philosophy" : "top" : p >= 0.625 ? "questions" : p >= 0.25 ? "philosophy" : "top";
     if (activeSection !== currentSection) {
       activeSection = currentSection;
       if (parent !== window) parent.postMessage({ type: "preview-active-section", id: currentSection }, "*");
@@ -524,7 +541,7 @@
     const lowerSection = ["cases", "reviews", "information"].includes(id);
     if (lowerSection && (!spaceVisited || !videoAvailable)) dockDismissed = true;
     const topInset = lowerSection && !dockDismissed ? metrics.splitLine : metrics.headerHeight;
-    const top = id === "top" ? metrics.intro.top : !staticStory && position !== void 0 ? metrics.intro.top + position * (metrics.intro.height - metrics.viewport) : scrollY + element.getBoundingClientRect().top + titleOffset - topInset;
+    const top = id === "top" ? scrollY + hero.getBoundingClientRect().top : !staticStory && position !== void 0 ? metrics.intro.top + (position - philosophyStart) / (1 - philosophyStart) * (metrics.intro.height - metrics.viewport) : scrollY + element.getBoundingClientRect().top + titleOffset - topInset;
     scrollTo({ top: Math.max(0, top), behavior: staticStory || instant ? "instant" : "smooth" });
     if (staticStory || instant) measure();
     return true;

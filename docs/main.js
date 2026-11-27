@@ -1,6 +1,5 @@
 const params = new URLSearchParams(location.search);
 const motion = !["off", "reduce"].includes(params.get("motion"));
-const scaleContainer = document.querySelector(".page-scale");
 const introBanner = document.querySelector(".pre-main");
 let lastScale;
 function fit() {
@@ -110,7 +109,7 @@ function navigateSection(id, { focus = false, remember = false, instant = false,
   if (!window.storyNavigate?.(id, { instant })) {
     const header = document.querySelector(".story-header");
     const titleOffset = id === "information" ? (target.querySelector('[data-node-id="986:263"]')?.offsetTop || 0) * lastScale - 12 : 0;
-    const top = ["main", "top"].includes(id) ? scrollY + scaleContainer.getBoundingClientRect().top : scrollY + target.getBoundingClientRect().top + titleOffset - (header?.getBoundingClientRect().height || 0);
+    const top = ["main", "top"].includes(id) ? scrollY + target.getBoundingClientRect().top : scrollY + target.getBoundingClientRect().top + titleOffset - (header?.getBoundingClientRect().height || 0);
     scrollTo({ top: Math.max(0, top), behavior: instant || !motion ? "instant" : "smooth" });
   }
   if (focus) focusSection(target, token);
