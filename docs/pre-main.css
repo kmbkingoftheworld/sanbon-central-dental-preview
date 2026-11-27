@@ -7,19 +7,22 @@
   color: #fff;
   background: #10151d;
 }
-.pre-main-media, .pre-main-media img {
+.pre-main-media,
+.pre-main-media img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
-.pre-main-media img { object-fit: cover; object-position: 32% center; }
+.pre-main-media img {
+  object-fit: cover;
+  object-position: 32% center;
+}
 .pre-main-caption {
   position: absolute;
   inset: 23% 52% 26% 3%;
   pointer-events: none;
 }
-/* The wide artwork already carries this copy. Keep it readable by screen readers. */
 .pre-main-caption > * {
   position: absolute;
   width: 1px;
@@ -29,17 +32,16 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.pre-main.has-scroll-entry { touch-action: pan-x pinch-zoom; }
-
-/* Let the menu travel in with the main page, then pin it at its usual position. */
+.pre-main.has-scroll-entry {
+  touch-action: pan-x pinch-zoom;
+}
 .pre-main ~ .story-header {
   position: sticky;
   margin-bottom: calc(-80px * var(--page-scale, 1));
 }
-.pre-main .scroll-guide { zoom: 1; }
-
-/* The circle is just larger than the viewport diagonal. Its inward-growing
-   border closes over the live scene, then opens over the real main page. */
+.pre-main .scroll-guide {
+  zoom: 1;
+}
 .entry-iris {
   position: fixed;
   inset: 0;
@@ -58,22 +60,36 @@
   border-radius: 50%;
   background: #10151d;
 }
-html.entering-main, .entering-main .intro-story { background: #10151d; }
+html.entering-main,
+.entering-main .intro-story {
+  background: #10151d;
+}
 .entering-main .story-header {
   transform-origin: center 50vh;
   transform-origin: center 50dvh;
 }
-.entering-main .scroll-guide { visibility: hidden; }
-
-/* Use the portrait half of the same artwork and live type for a narrow screen. */
+.entering-main .scroll-guide {
+  visibility: hidden;
+}
 @media (max-aspect-ratio: 4/3) {
-  .pre-main { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  .pre-main {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
   .pre-main-media {
     position: relative;
     overflow: hidden;
-    mask-image: linear-gradient(to bottom, #000 76%, transparent);
+    mask-image:
+      linear-gradient(
+        to bottom,
+        #000 76%,
+        transparent);
   }
-  .pre-main-media img { inset: 0 0 0 auto; width: 185%; object-position: 68% 35%; }
+  .pre-main-media img {
+    inset: 0 0 0 auto;
+    width: 185%;
+    object-position: 68% 35%;
+  }
   .pre-main-caption {
     position: relative;
     inset: auto;
@@ -90,8 +106,14 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
     clip-path: none;
     white-space: normal;
   }
-  .pre-main-caption h2 { font-size: clamp(18px, 4.7vw, 32px); line-height: 1.45; letter-spacing: -.035em; }
-  .pre-main-caption h2 strong { color: #ffac48; }
+  .pre-main-caption h2 {
+    font-size: clamp(18px, 4.7vw, 32px);
+    line-height: 1.45;
+    letter-spacing: -.035em;
+  }
+  .pre-main-caption h2 strong {
+    color: #ffac48;
+  }
   .pre-main-caption p {
     margin-top: clamp(12px, 2vh, 20px);
     color: #e0e4e8;
@@ -114,16 +136,14 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   clip-path: none;
   white-space: normal;
 }
-
-/* Opening film. A sharp photograph lies over the paused first frame of the same
-   footage and dissolves into it when the film starts. Logo and type are drawn by
-   the page, not baked into the footage, so they stay crisp at every screen size. */
 @font-face {
   font-family: "Gowun Dodum Intro";
-  src: url("assets/clinic/GowunDodum-intro.woff2") format("woff2");
+  src: url(assets/clinic/GowunDodum-intro.woff2) format("woff2");
   font-display: swap;
 }
-.pre-main.is-film { display: block; }
+.pre-main.is-film {
+  display: block;
+}
 .pre-main.is-film .pre-main-media {
   position: absolute;
   inset: 0;
@@ -141,32 +161,45 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   background: #10151d;
   pointer-events: none;
 }
-.pre-main.is-film .pre-main-still { transition: opacity .45s linear; }
-.pre-main.film-playing .pre-main-still { opacity: 0; }
-/* Keeps the corner labels readable over the city lights. */
+.pre-main.is-film .pre-main-still {
+  transition: opacity .45s linear;
+}
+.pre-main.film-playing .pre-main-still {
+  opacity: 0;
+}
 .pre-main.is-film .pre-main-media::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(7, 11, 19, .5), transparent 24%);
+  background:
+    linear-gradient(
+      to top,
+      rgba(7, 11, 19, .5),
+      transparent 24%);
   pointer-events: none;
 }
-
-/* The photograph dims a little while the title is up, so white type reads over the city lights. */
 .pre-main.is-film .pre-main-media::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: radial-gradient(ellipse 70% 62% at 50% 44%, rgba(6, 9, 16, .62), rgba(6, 9, 16, .3) 70%, rgba(6, 9, 16, .16));
+  background:
+    radial-gradient(
+      ellipse 70% 62% at 50% 44%,
+      rgba(6, 9, 16, .62),
+      rgba(6, 9, 16, .3) 70%,
+      rgba(6, 9, 16, .16));
   opacity: 0;
   transition: opacity 1.5s ease;
   pointer-events: none;
 }
-.pre-main.title-in .pre-main-media::before { opacity: 1; }
-.pre-main.title-out .pre-main-media::before { opacity: 0; transition-duration: .6s; }
-
-/* Logo and line of copy rise into the middle of the photograph. */
+.pre-main.title-in .pre-main-media::before {
+  opacity: 1;
+}
+.pre-main.title-out .pre-main-media::before {
+  opacity: 0;
+  transition-duration: .6s;
+}
 .intro-title {
   position: absolute;
   left: 50%;
@@ -188,43 +221,72 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   position: absolute;
   inset: -26% -34%;
   z-index: -1;
-  background: radial-gradient(closest-side, rgba(7, 11, 19, .6), rgba(7, 11, 19, .3) 58%, transparent);
+  background:
+    radial-gradient(
+      closest-side,
+      rgba(7, 11, 19, .6),
+      rgba(7, 11, 19, .3) 58%,
+      transparent);
 }
-.pre-main.title-in .intro-title { opacity: 1; transform: none; }
-.pre-main.title-out .intro-title { opacity: 0; transition: opacity .6s ease; }
+.pre-main.title-in .intro-title {
+  opacity: 1;
+  transform: none;
+}
+.pre-main.title-out .intro-title {
+  opacity: 0;
+  transition: opacity .6s ease;
+}
 .intro-logo {
   display: grid;
   justify-items: center;
   width: clamp(210px, 20vw, 400px);
 }
-.intro-logo img { display: block; height: auto; }
-.intro-logo-mark { width: 34%; }
-.intro-logo-name { width: 100%; margin-top: 8%; }
-.intro-logo-en { width: 94%; margin-top: 5.5%; }
+.intro-logo img {
+  display: block;
+  height: auto;
+}
+.intro-logo-mark {
+  width: 34%;
+}
+.intro-logo-name {
+  width: 100%;
+  margin-top: 8%;
+}
+.intro-logo-en {
+  width: 94%;
+  margin-top: 5.5%;
+}
 .intro-tagline {
   margin: clamp(20px, 2.1vw, 40px) 0 0;
   color: #fff6ea;
-  font: 400 clamp(18px, 1.9vw, 34px)/1.45 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
+  font:
+    400 clamp(18px, 1.9vw, 34px)/1.45 "Gowun Dodum Intro",
+    "Gowun Dodum",
+    Pretendard,
+    "Malgun Gothic",
+    sans-serif;
   letter-spacing: .06em;
   word-break: keep-all;
-  /* Gowun Dodum ships one weight; an even outline in the text colour thickens it. */
   -webkit-text-stroke: .034em currentColor;
   paint-order: stroke fill;
   text-shadow: 0 0 20px rgba(5, 8, 14, .95), 0 1px 4px rgba(5, 8, 14, .9);
 }
-
-/* Place name: on the photograph from the first moment, gone once the camera leaves. */
 .intro-place {
   position: absolute;
-  right: clamp(22px, 3.4vw, 68px);
-  bottom: clamp(26px, 5.2vh, 58px);
+  right: clamp(34px, 5.5vw, 104px);
+  bottom: clamp(40px, 7vh, 84px);
   z-index: 1;
   display: flex;
   align-items: center;
   gap: .75em;
   margin: 0;
   color: #fff;
-  font: 400 clamp(15px, 1.2vw, 22px)/1 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
+  font:
+    400 clamp(19px, 1.55vw, 28px)/1 "Gowun Dodum Intro",
+    "Gowun Dodum",
+    Pretendard,
+    "Malgun Gothic",
+    sans-serif;
   letter-spacing: .22em;
   text-shadow: 0 1px 10px rgba(5, 8, 14, .85);
   pointer-events: none;
@@ -236,9 +298,10 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   height: 1px;
   background: #f7941d;
 }
-.pre-main.film-playing .intro-place { opacity: 0; transition-delay: .9s; }
-
-/* The only way to leave the film early. Sits above the full-banner scroll link. */
+.pre-main.film-playing .intro-place {
+  opacity: 0;
+  transition-delay: .9s;
+}
 .intro-skip {
   position: absolute;
   right: clamp(18px, 3vw, 60px);
@@ -249,30 +312,59 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   border-radius: 999px;
   background: rgba(9, 13, 21, .36);
   color: rgba(255, 255, 255, .9);
-  font: 400 clamp(12px, .82vw, 14px)/1 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
+  font:
+    400 clamp(12px, .82vw, 14px)/1 "Gowun Dodum Intro",
+    "Gowun Dodum",
+    Pretendard,
+    "Malgun Gothic",
+    sans-serif;
   letter-spacing: .08em;
   cursor: pointer;
   opacity: 0;
-  transition: opacity .6s ease, background-color .2s, color .2s, border-color .2s;
+  transition:
+    opacity .6s ease,
+    background-color .2s,
+    color .2s,
+    border-color .2s;
 }
-.intro-skip[hidden] { display: none; }
-.pre-main.film-playing .intro-skip { opacity: 1; transition-delay: 1.5s, 0s, 0s, 0s; }
+.intro-skip[hidden] {
+  display: none;
+}
+.pre-main.film-playing .intro-skip {
+  opacity: 1;
+  transition-delay:
+    1.5s,
+    0s,
+    0s,
+    0s;
+}
 .intro-skip:hover,
 .intro-skip:focus-visible {
   border-color: transparent;
   background: rgba(247, 148, 29, .94);
   color: #2b1a08;
 }
-.intro-skip:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-/* The touch hint steps aside while the film runs. */
-.pre-main .scroll-guide-badge { transition: opacity .4s ease; }
-.pre-main.film-playing .scroll-guide-badge { opacity: 0; }
-
-@media (max-aspect-ratio: 4/3) {
-  .intro-title { top: 40%; }
-  .intro-logo { width: clamp(190px, 52vw, 300px); }
-  /* Clear of the centred touch hint at the foot of the screen. */
-  .intro-place { bottom: calc(max(clamp(16px, 3.5vh, 36px), env(safe-area-inset-bottom, 0px) + 12px) + 84px); }
+.intro-skip:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
-/* The scroll hint stays above the dimmed photograph. */
-.pre-main.is-film .scroll-guide { z-index: 2; }
+.pre-main .scroll-guide-badge {
+  transition: opacity .4s ease;
+}
+.pre-main.film-playing .scroll-guide-badge {
+  opacity: 0;
+}
+@media (max-aspect-ratio: 4/3) {
+  .intro-title {
+    top: 40%;
+  }
+  .intro-logo {
+    width: clamp(190px, 52vw, 300px);
+  }
+  .intro-place {
+    bottom: calc(max(clamp(16px, 3.5vh, 36px), env(safe-area-inset-bottom, 0px) + 12px) + 100px);
+  }
+}
+.pre-main.is-film .scroll-guide {
+  z-index: 2;
+}

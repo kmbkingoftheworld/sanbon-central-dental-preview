@@ -33,11 +33,10 @@ window.SANBON_STORY = {
       ]
     }
   ],
-  "spaceVideo": "assets/clinic/higgsfield-tour-al.mp4",
-  "spacePoster": "assets/clinic/higgsfield-tour-al-poster.webp",
+  "spaceVideo": "assets/clinic/clinic-tour.mp4",
+  "spacePoster": "assets/clinic/clinic-tour-poster.webp",
   "spaceVideoFromStart": true,
   "spaceVideoFit": "contain",
   "spaceVideoLabel": "산본중심치과 3D 도면과 진료 공간 둘러보기 영상",
-  "spaceVideoReviewName": "힉스필드 공간투어 AL 검토본",
   "spaceVideoMarker": "산본중심치과 공간 둘러보기"
 };
