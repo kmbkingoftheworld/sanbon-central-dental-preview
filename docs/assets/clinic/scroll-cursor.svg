@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="108" viewBox="0 0 64 108">
+  <defs>
+    <linearGradient id="o" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffc06a"/>
+      <stop offset="1" stop-color="#ff8a2b"/>
+    </linearGradient>
+  </defs>
+  <!-- soft dark halo keeps the shape readable on bright photographs -->
+  <rect x="13" y="5" width="38" height="60" rx="19" fill="#1b1209" opacity=".28"/>
+  <!-- mouse body -->
+  <rect x="14" y="4" width="36" height="58" rx="18" fill="url(#o)" stroke="#fff7ec" stroke-width="2"/>
+  <!-- wheel: the hotspot sits here -->
+  <rect x="29.5" y="14" width="5" height="15" rx="2.5" fill="#fff7ec"/>
+  <!-- descending chevrons -->
+  <path d="M24 70l8 7 8-7" fill="none" stroke="#1b1209" stroke-opacity=".3" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 70l8 7 8-7" fill="none" stroke="#ffa544" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 80l6 5.2 6-5.2" fill="none" stroke="#1b1209" stroke-opacity=".25" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 80l6 5.2 6-5.2" fill="none" stroke="#ffbf75" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- label plate -->
+  <rect x="3" y="91" width="58" height="16" rx="4" fill="url(#o)"/>
+  <text x="32" y="102.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="700" letter-spacing="1.6" fill="#35200d">SCROLL</text>
+</svg>

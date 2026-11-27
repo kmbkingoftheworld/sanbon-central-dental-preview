@@ -11,8 +11,8 @@
 
   const photo = banner.querySelector('img');
   const showCaption = () => banner.classList.add('photo-missing');
-  photo.addEventListener('error', showCaption, { once: true });
-  if (photo.complete && !photo.naturalWidth) showCaption();
+  photo?.addEventListener('error', showCaption, { once: true });
+  if (photo && photo.complete && !photo.naturalWidth) showCaption();
 
   const hero = document.getElementById('top');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -22,10 +22,51 @@
   let cover = null, phase = null, skipRest = false;
   let zooms = [];
 
+  // The opening film starts on a frozen first frame, so it reads as a photograph
+  // while the caption types. The first scroll (or 5 s of waiting) lets the same
+  // <video> run on: no swap, so nothing can jump. A second scroll skips to main.
+  const film = banner.querySelector('video');
+  const HOLD = 2.5, HEAD = 3, AUTO_MS = 5000, SKIP_GUARD_MS = 900;
+  let filmState = film ? 'still' : 'none', filmStarted = 0, autoTimer;
+  function startFilm() {
+    if (filmState !== 'still') return;
+    filmState = 'playing';
+    filmStarted = performance.now();
+    clearTimeout(autoTimer);
+    banner.classList.add('film-playing');
+    // The rest of the frozen head is the same picture: jump to the first moving frame.
+    if (film.currentTime < HEAD) film.currentTime = HEAD;
+    const run = film.play();
+    if (run) run.catch(() => { filmState = 'none'; enterMain(); });
+  }
+  function stopFilm() {
+    clearTimeout(autoTimer);
+    if (filmState !== 'none') filmState = 'done';
+  }
+  function advance(options) {
+    if (filmState === 'still' && !prefersStill()) { startFilm(); return; }
+    if (filmState === 'playing' && performance.now() - filmStarted < SKIP_GUARD_MS) return;
+    enterMain(options);
+  }
+  if (film) {
+    film.muted = true;
+    film.addEventListener('timeupdate', () => {
+      if (filmState === 'still' && film.currentTime >= HOLD) film.pause();
+    });
+    film.addEventListener('ended', () => { if (filmState === 'playing') enterMain({}); });
+    film.addEventListener('error', () => { filmState = 'none'; clearTimeout(autoTimer); });
+    if (!prefersStill()) {
+      const typing = film.play();
+      if (typing) typing.catch(() => {});
+      autoTimer = setTimeout(startFilm, AUTO_MS);
+    }
+  }
+
   // The opaque ring and its contents share the viewport center. Only change the
   // real scroll position when the aperture is closed, including the sticky menu.
   async function enterMain(options = {}) {
     if (cover) return;
+    stopFilm();
     const arrive = () => {
       if (typeof navigateSection === 'function') navigateSection('top', { ...options, instant: true });
       else document.querySelector('.page-scale').scrollIntoView({ block: 'start', behavior: 'instant' });
@@ -79,6 +120,7 @@
       await play(banner, false);
       arrive();
       arrived = true;
+      film?.pause();
       // Include the backing artwork that shows through the hero photograph.
       await play(hero.closest('.intro-stage') || hero, true);
     } finally {
@@ -119,13 +161,13 @@
   banner.addEventListener('wheel', event => {
     if (event.defaultPrevented || !downWheel(event)) return;
     holdWheel(event);
-    enterMain();
+    advance();
   }, { passive: false });
 
   banner.querySelector('.scroll-guide-link').addEventListener('click', event => {
     if (event.defaultPrevented || event.button !== 0 || modified(event)) return;
     event.preventDefault();
-    enterMain({ focus: true, remember: true });
+    advance({ focus: true, remember: true });
   });
   window.addEventListener('keydown', event => {
     if (event.defaultPrevented || modified(event)) return;
@@ -137,7 +179,7 @@
     // Browser Back can restore the banner while focus is still on the main heading.
     if (!banner.contains(event.target) && event.target.closest?.('a,button,input,select,textarea,[contenteditable]')) return;
     event.preventDefault();
-    enterMain({ focus: true });
+    advance({ focus: true });
   });
 
   // Recognize a single vertical swipe on the cover; preserve horizontal gestures and pinch zoom.
@@ -154,7 +196,7 @@
     const end = event.changedTouches[0];
     const dy = start.clientY - end.clientY;
     if (Math.abs(dy) < 30 || Math.abs(dy) <= Math.abs(start.clientX - end.clientX)) return;
-    if (dy > 0) enterMain();
+    if (dy > 0) advance();
     else if (banner.getBoundingClientRect().top < 0)
       banner.scrollIntoView({ block: 'start', behavior: prefersStill() ? 'instant' : 'smooth' });
   }, { passive: true });

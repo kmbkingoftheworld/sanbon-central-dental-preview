@@ -114,3 +114,41 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   clip-path: none;
   white-space: normal;
 }
+
+/* Opening film: one full-bleed <video> at every screen shape. Anchored to the
+   top so the logo and typed caption baked into the footage are never cropped. */
+.pre-main.is-film { display: block; }
+.pre-main.is-film .pre-main-media {
+  position: absolute;
+  inset: 0;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+.pre-main.is-film .pre-main-media video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  background: #10151d;
+  pointer-events: none;
+}
+.pre-main.is-film .pre-main-caption {
+  position: absolute;
+  inset: auto;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.pre-main.is-film .pre-main-caption > * {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
