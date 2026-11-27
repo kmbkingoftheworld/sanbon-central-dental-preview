@@ -9,11 +9,6 @@
     return;
   }
 
-  const photo = banner.querySelector('img');
-  const showCaption = () => banner.classList.add('photo-missing');
-  photo?.addEventListener('error', showCaption, { once: true });
-  if (photo && photo.complete && !photo.naturalWidth) showCaption();
-
   const hero = document.getElementById('top');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const prefersStill = () => mode === 'reduce';
@@ -22,44 +17,72 @@
   let cover = null, phase = null, skipRest = false;
   let zooms = [];
 
-  // The opening film starts on a frozen first frame, so it reads as a photograph
-  // while the caption types. The first scroll (or 5 s of waiting) lets the same
-  // <video> run on: no swap, so nothing can jump. A second scroll skips to main.
+  // Opening film. A sharp photograph lies over the paused first frame of the same
+  // footage. The first scroll (or 5 s of waiting) starts the film and the photograph
+  // dissolves into it. The film must then run to its end; scrolling only speeds it
+  // up for a moment. The small "skip" button is the one way to leave early.
   const film = banner.querySelector('video');
-  const HOLD = 2.5, HEAD = 3, AUTO_MS = 5000, SKIP_GUARD_MS = 900;
-  let filmState = film ? 'still' : 'none', filmStarted = 0, autoTimer;
+  const skip = banner.querySelector('.intro-skip');
+  const TITLE_MS = 1300, AUTO_MS = 5000;
+  const BOOST_RATE = 2.5, BOOST_HOLD_MS = 450, BOOST_AFTER_MS = 600;
+  let filmState = film ? 'still' : 'none', filmStarted = 0, autoTimer, titleTimer, boostTimer;
+  const filming = () => !prefersStill() && (filmState === 'still' || filmState === 'playing');
+
   function startFilm() {
     if (filmState !== 'still') return;
     filmState = 'playing';
     filmStarted = performance.now();
     clearTimeout(autoTimer);
-    banner.classList.add('film-playing');
-    // The rest of the frozen head is the same picture: jump to the first moving frame.
-    if (film.currentTime < HEAD) film.currentTime = HEAD;
+    clearTimeout(titleTimer);
+    // An early scroll still gets to read the title before it leaves.
+    const titleShown = banner.classList.contains('title-in');
+    banner.classList.add('title-in');
+    titleTimer = setTimeout(() => banner.classList.add('title-out'), titleShown ? 1500 : 2900);
+    // Render the button once at opacity 0 so its delayed fade-in always runs.
+    if (skip) { skip.hidden = false; void skip.offsetWidth; }
     const run = film.play();
-    if (run) run.catch(() => { filmState = 'none'; enterMain(); });
+    if (run) run.catch(() => { filmState = 'none'; enterMain({}); });
+  }
+  function boost() {
+    if (filmState !== 'playing' || performance.now() - filmStarted < BOOST_AFTER_MS) return;
+    film.playbackRate = BOOST_RATE;
+    clearTimeout(boostTimer);
+    boostTimer = setTimeout(() => { film.playbackRate = 1; }, BOOST_HOLD_MS);
   }
   function stopFilm() {
     clearTimeout(autoTimer);
+    clearTimeout(titleTimer);
+    clearTimeout(boostTimer);
+    if (film) film.playbackRate = 1;
     if (filmState !== 'none') filmState = 'done';
+  }
+  // Coming back up to the banner shows the photograph and title again.
+  function resetFilm() {
+    if (!film) return;
+    film.pause();
+    try { film.currentTime = 0; } catch (error) { /* not seekable yet */ }
+    banner.classList.remove('film-playing', 'title-out');
+    banner.classList.add('title-in');
+    if (skip) skip.hidden = true;
   }
   function advance(options) {
     if (filmState === 'still' && !prefersStill()) { startFilm(); return; }
-    if (filmState === 'playing' && performance.now() - filmStarted < SKIP_GUARD_MS) return;
+    if (filmState === 'playing') { boost(); return; }
     enterMain(options);
   }
   if (film) {
     film.muted = true;
-    film.addEventListener('timeupdate', () => {
-      if (filmState === 'still' && film.currentTime >= HOLD) film.pause();
-    });
+    film.addEventListener('playing', () => { if (filmState === 'playing') banner.classList.add('film-playing'); });
     film.addEventListener('ended', () => { if (filmState === 'playing') enterMain({}); });
-    film.addEventListener('error', () => { filmState = 'none'; clearTimeout(autoTimer); });
-    if (!prefersStill()) {
-      const typing = film.play();
-      if (typing) typing.catch(() => {});
-      autoTimer = setTimeout(startFilm, AUTO_MS);
-    }
+    film.addEventListener('error', () => {
+      const wasPlaying = filmState === 'playing';
+      if (filmState === 'still' || wasPlaying) filmState = 'none';
+      clearTimeout(autoTimer);
+      if (wasPlaying) enterMain({});
+    });
+    skip?.addEventListener('click', () => enterMain({ focus: true }));
+    titleTimer = setTimeout(() => banner.classList.add('title-in'), TITLE_MS);
+    if (!prefersStill()) autoTimer = setTimeout(startFilm, AUTO_MS);
   }
 
   // The opaque ring and its contents share the viewport center. Only change the
@@ -120,14 +143,14 @@
       await play(banner, false);
       arrive();
       arrived = true;
-      film?.pause();
+      resetFilm();
       // Include the backing artwork that shows through the hero photograph.
       await play(hero.closest('.intro-stage') || hero, true);
     } finally {
       cover.remove();
       cover = null;
       document.documentElement.classList.remove('entering-main');
-      if (!arrived) arrive();
+      if (!arrived) { arrive(); resetFilm(); }
     }
   }
 
@@ -160,8 +183,10 @@
   }
   banner.addEventListener('wheel', event => {
     if (event.defaultPrevented || !downWheel(event)) return;
+    // While the film is waiting or running, the wheel never moves the page.
+    if (filming()) { event.preventDefault(); advance(); return; }
     holdWheel(event);
-    advance();
+    enterMain();
   }, { passive: false });
 
   banner.querySelector('.scroll-guide-link').addEventListener('click', event => {
@@ -176,6 +201,8 @@
       return;
     }
     if (!['ArrowDown', 'PageDown', ' '].includes(event.key) || banner.getBoundingClientRect().bottom <= 1) return;
+    // The skip button keeps its own Space/Enter behaviour.
+    if (event.target.closest?.('.intro-skip')) return;
     // Browser Back can restore the banner while focus is still on the main heading.
     if (!banner.contains(event.target) && event.target.closest?.('a,button,input,select,textarea,[contenteditable]')) return;
     event.preventDefault();
@@ -189,6 +216,11 @@
     touchStart = event.touches.length === 1 ? event.touches[0] : null;
   }, { passive: true });
   banner.addEventListener('touchcancel', () => { touchStart = null; });
+  // Dragging upward during the film keeps it fast for as long as the finger moves.
+  banner.addEventListener('touchmove', event => {
+    if (!touchStart || filmState !== 'playing' || event.touches.length !== 1) return;
+    if (touchStart.clientY - event.touches[0].clientY > 12) boost();
+  }, { passive: true });
   banner.addEventListener('touchend', event => {
     const start = touchStart;
     touchStart = null;

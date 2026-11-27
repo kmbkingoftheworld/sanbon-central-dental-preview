@@ -115,8 +115,14 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   white-space: normal;
 }
 
-/* Opening film: one full-bleed <video> at every screen shape. Anchored to the
-   top so the logo and typed caption baked into the footage are never cropped. */
+/* Opening film. A sharp photograph lies over the paused first frame of the same
+   footage and dissolves into it when the film starts. Logo and type are drawn by
+   the page, not baked into the footage, so they stay crisp at every screen size. */
+@font-face {
+  font-family: "Gowun Dodum Intro";
+  src: url("assets/clinic/GowunDodum-intro.woff2") format("woff2");
+  font-display: swap;
+}
 .pre-main.is-film { display: block; }
 .pre-main.is-film .pre-main-media {
   position: absolute;
@@ -124,31 +130,146 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   mask-image: none;
   -webkit-mask-image: none;
 }
-.pre-main.is-film .pre-main-media video {
+.pre-main.is-film .pre-main-media video,
+.pre-main.is-film .pre-main-media .pre-main-still {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center;
   background: #10151d;
   pointer-events: none;
 }
-.pre-main.is-film .pre-main-caption {
+.pre-main.is-film .pre-main-still { transition: opacity .45s linear; }
+.pre-main.film-playing .pre-main-still { opacity: 0; }
+/* Keeps the corner labels readable over the city lights. */
+.pre-main.is-film .pre-main-media::after {
+  content: "";
   position: absolute;
-  inset: auto;
-  width: 1px;
-  height: 1px;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7, 11, 19, .5), transparent 24%);
+  pointer-events: none;
+}
+
+/* The photograph dims a little while the title is up, so white type reads over the city lights. */
+.pre-main.is-film .pre-main-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse 70% 62% at 50% 44%, rgba(6, 9, 16, .62), rgba(6, 9, 16, .3) 70%, rgba(6, 9, 16, .16));
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  pointer-events: none;
+}
+.pre-main.title-in .pre-main-media::before { opacity: 1; }
+.pre-main.title-out .pre-main-media::before { opacity: 0; transition-duration: .8s; }
+
+/* Logo and line of copy rise into the middle of the photograph. */
+.intro-title {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  z-index: 1;
+  translate: -50% -50%;
+  display: grid;
+  justify-items: center;
+  width: max-content;
+  max-width: 88vw;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 1.5s ease, transform 1.8s cubic-bezier(.2, .7, .2, 1);
+}
+.intro-title::before {
+  content: "";
+  position: absolute;
+  inset: -26% -34%;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgba(7, 11, 19, .6), rgba(7, 11, 19, .3) 58%, transparent);
+}
+.pre-main.title-in .intro-title { opacity: 1; transform: none; }
+.pre-main.title-out .intro-title { opacity: 0; transition: opacity .8s ease; }
+.intro-logo {
+  display: grid;
+  justify-items: center;
+  width: clamp(210px, 20vw, 400px);
+}
+.intro-logo img { display: block; height: auto; }
+.intro-logo-mark { width: 34%; }
+.intro-logo-name { width: 100%; margin-top: 8%; }
+.intro-logo-en { width: 94%; margin-top: 5.5%; }
+.intro-tagline {
+  margin: clamp(20px, 2.1vw, 40px) 0 0;
+  color: #fff6ea;
+  font: 400 clamp(18px, 1.9vw, 34px)/1.45 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
+  letter-spacing: .06em;
+  word-break: keep-all;
+  text-shadow: 0 0 20px rgba(5, 8, 14, .95), 0 1px 4px rgba(5, 8, 14, .9);
+}
+
+/* Place name: on the photograph from the first moment, gone once the camera leaves. */
+.intro-place {
+  position: absolute;
+  right: clamp(22px, 3.4vw, 68px);
+  bottom: clamp(26px, 5.2vh, 58px);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: .75em;
   margin: 0;
-  padding: 0;
-  overflow: hidden;
+  color: #fff;
+  font: 400 clamp(15px, 1.2vw, 22px)/1 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
+  letter-spacing: .22em;
+  text-shadow: 0 1px 10px rgba(5, 8, 14, .85);
+  pointer-events: none;
+  transition: opacity .6s ease;
 }
-.pre-main.is-film .pre-main-caption > * {
-  position: absolute;
-  width: 1px;
+.intro-place::before {
+  content: "";
+  width: 2em;
   height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  background: #f7941d;
 }
+.pre-main.film-playing .intro-place { opacity: 0; transition-delay: .9s; }
+
+/* The only way to leave the film early. Sits above the full-banner scroll link. */
+.intro-skip {
+  position: absolute;
+  right: clamp(18px, 3vw, 60px);
+  bottom: clamp(20px, 4.6vh, 50px);
+  z-index: 5;
+  padding: .52em 1em .58em;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 999px;
+  background: rgba(9, 13, 21, .36);
+  color: rgba(255, 255, 255, .9);
+  font: 400 clamp(12px, .82vw, 14px)/1 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
+  letter-spacing: .08em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .6s ease, background-color .2s, color .2s, border-color .2s;
+}
+.intro-skip[hidden] { display: none; }
+.pre-main.film-playing .intro-skip { opacity: 1; transition-delay: 1.5s, 0s, 0s, 0s; }
+.intro-skip:hover,
+.intro-skip:focus-visible {
+  border-color: transparent;
+  background: rgba(247, 148, 29, .94);
+  color: #2b1a08;
+}
+.intro-skip:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+/* The touch hint steps aside while the film runs. */
+.pre-main .scroll-guide-badge { transition: opacity .4s ease; }
+.pre-main.film-playing .scroll-guide-badge { opacity: 0; }
+
+@media (max-aspect-ratio: 4/3) {
+  .intro-title { top: 40%; }
+  .intro-logo { width: clamp(190px, 52vw, 300px); }
+  /* Clear of the centred touch hint at the foot of the screen. */
+  .intro-place { bottom: calc(max(clamp(16px, 3.5vh, 36px), env(safe-area-inset-bottom, 0px) + 12px) + 84px); }
+}
+/* The scroll hint stays above the dimmed photograph. */
+.pre-main.is-film .scroll-guide { z-index: 2; }
