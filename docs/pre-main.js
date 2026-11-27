@@ -23,21 +23,25 @@
   // up for a moment. The small "skip" button is the one way to leave early.
   const film = banner.querySelector('video');
   const skip = banner.querySelector('.intro-skip');
-  const TITLE_MS = 1300, AUTO_MS = 5000;
+  const TITLE_MS = 1300, AUTO_MS = 5000, TITLE_OUT_MS = 650;
   const BOOST_RATE = 2.5, BOOST_HOLD_MS = 450, BOOST_AFTER_MS = 600;
-  let filmState = film ? 'still' : 'none', filmStarted = 0, autoTimer, titleTimer, boostTimer;
-  const filming = () => !prefersStill() && (filmState === 'still' || filmState === 'playing');
+  let filmState = film ? 'still' : 'none', filmStarted = 0, autoTimer, titleTimer, playTimer, boostTimer;
+  const filming = () => !prefersStill() && ['still', 'opening', 'playing'].includes(filmState);
 
   function startFilm() {
     if (filmState !== 'still') return;
-    filmState = 'playing';
-    filmStarted = performance.now();
+    filmState = 'opening';
     clearTimeout(autoTimer);
     clearTimeout(titleTimer);
-    // An early scroll still gets to read the title before it leaves.
-    const titleShown = banner.classList.contains('title-in');
-    banner.classList.add('title-in');
-    titleTimer = setTimeout(() => banner.classList.add('title-out'), titleShown ? 1500 : 2900);
+    // The logo and copy leave first; the picture only starts to move once they are gone.
+    const titleUp = banner.classList.contains('title-in');
+    banner.classList.add('title-out');
+    playTimer = setTimeout(playFilm, titleUp ? TITLE_OUT_MS : 0);
+  }
+  function playFilm() {
+    if (filmState !== 'opening') return;
+    filmState = 'playing';
+    filmStarted = performance.now();
     // Render the button once at opacity 0 so its delayed fade-in always runs.
     if (skip) { skip.hidden = false; void skip.offsetWidth; }
     const run = film.play();
@@ -53,6 +57,7 @@
     clearTimeout(autoTimer);
     clearTimeout(titleTimer);
     clearTimeout(boostTimer);
+    clearTimeout(playTimer);
     if (film) film.playbackRate = 1;
     if (filmState !== 'none') filmState = 'done';
   }
@@ -67,6 +72,7 @@
   }
   function advance(options) {
     if (filmState === 'still' && !prefersStill()) { startFilm(); return; }
+    if (filmState === 'opening') return;
     if (filmState === 'playing') { boost(); return; }
     enterMain(options);
   }
@@ -82,7 +88,7 @@
     });
     skip?.addEventListener('click', () => enterMain({ focus: true }));
     titleTimer = setTimeout(() => banner.classList.add('title-in'), TITLE_MS);
-    if (!prefersStill()) autoTimer = setTimeout(startFilm, AUTO_MS);
+    if (!prefersStill()) autoTimer = setTimeout(startFilm, AUTO_MS - TITLE_OUT_MS);
   }
 
   // The opaque ring and its contents share the viewport center. Only change the

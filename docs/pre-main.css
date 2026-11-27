@@ -164,7 +164,7 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   pointer-events: none;
 }
 .pre-main.title-in .pre-main-media::before { opacity: 1; }
-.pre-main.title-out .pre-main-media::before { opacity: 0; transition-duration: .8s; }
+.pre-main.title-out .pre-main-media::before { opacity: 0; transition-duration: .6s; }
 
 /* Logo and line of copy rise into the middle of the photograph. */
 .intro-title {
@@ -191,7 +191,7 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   background: radial-gradient(closest-side, rgba(7, 11, 19, .6), rgba(7, 11, 19, .3) 58%, transparent);
 }
 .pre-main.title-in .intro-title { opacity: 1; transform: none; }
-.pre-main.title-out .intro-title { opacity: 0; transition: opacity .8s ease; }
+.pre-main.title-out .intro-title { opacity: 0; transition: opacity .6s ease; }
 .intro-logo {
   display: grid;
   justify-items: center;
@@ -207,6 +207,9 @@ html.entering-main, .entering-main .intro-story { background: #10151d; }
   font: 400 clamp(18px, 1.9vw, 34px)/1.45 "Gowun Dodum Intro", "Gowun Dodum", Pretendard, "Malgun Gothic", sans-serif;
   letter-spacing: .06em;
   word-break: keep-all;
+  /* Gowun Dodum ships one weight; an even outline in the text colour thickens it. */
+  -webkit-text-stroke: .034em currentColor;
+  paint-order: stroke fill;
   text-shadow: 0 0 20px rgba(5, 8, 14, .95), 0 1px 4px rgba(5, 8, 14, .9);
 }
 

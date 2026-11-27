@@ -105,7 +105,8 @@
     padding-bottom: max(clamp(16px, 3.5vh, 36px), calc(env(safe-area-inset-bottom, 0px) + 12px));
     border-radius: 0;
     filter: none;
-    cursor: url("assets/clinic/scroll-cursor-80.svg") 40 26, pointer;
+    cursor: url("assets/clinic/scroll-cursor-128.png") 64 29, pointer;
+    cursor: image-set(url("assets/clinic/scroll-cursor-128.png") 1x, url("assets/clinic/scroll-cursor-128@2x.png") 2x) 64 29, pointer;
   }
   .scroll-mouse.story-active [data-design="tab"] .scroll-guide-link:hover:not(:focus-visible) .scroll-guide-badge {
     opacity: 0;
